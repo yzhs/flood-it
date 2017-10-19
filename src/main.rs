@@ -33,23 +33,6 @@ const COLORS: &[Color] = &[
     Color::Fuchsia,
 ];
 
-impl Color {
-    fn to_rgba(c: Color) -> [u8; 3] {
-        use Color::*;
-
-        match c {
-            Red => [255, 0, 0],
-            Yellow => [255, 255, 0],
-            Green => [0, 176, 0],
-            LightBrown => [255, 204, 102],
-            Purple => [128, 0, 128],
-            Cyan => [0, 255, 255],
-            Blue => [0, 0, 255],
-            Fuchsia => [255, 0, 255],
-        }
-    }
-}
-
 impl rand::Rand for Color {
     fn rand<R: rand::Rng>(rng: &mut R) -> Self {
         *rng.choose(COLORS).unwrap()
@@ -59,9 +42,7 @@ impl rand::Rand for Color {
 struct Grid {
     width: u8,
     height: u8,
-    num_colors: u8,
 
-    current_color: Color,
     cells: Vec<Color>,
 
     max_clicks: u16,
@@ -74,7 +55,7 @@ impl Grid {
         let between = Range::new(0, num_colors as usize);
         let mut rng = rand::thread_rng();
 
-        let cells: Vec<Color> = (0..size * size)
+        let cells: Vec<Color> = (0..size as u64 * size as u64)
             .map(|_| COLORS[between.ind_sample(&mut rng)])
             .collect();
         let max_clicks = 25 * 2 * size as u16 * num_colors as u16 / (2 * 14 * 6);
@@ -82,9 +63,7 @@ impl Grid {
         Self {
             width: size,
             height: size,
-            num_colors,
 
-            current_color: cells[0],
             cells,
 
             max_clicks,
@@ -115,7 +94,6 @@ impl Grid {
     /// the top left cell by cells of indentical color.
     fn flood(&mut self, new_color: Color) -> usize {
         let current_color = self.current_color();
-        self.num_clicks += 1;
 
         let rows = self.height as usize;
         let columns = self.width as usize;
@@ -127,6 +105,9 @@ impl Grid {
 
         let mut num_cells = 0;
         while let Some(i) = queue.pop_front() {
+            if self.cells[i] == new_color {
+                continue;
+            }
             num_cells += 1;
             self.cells[i] = new_color;
             visited.insert(i);
@@ -152,7 +133,7 @@ impl Grid {
                     frontier.push_back(i - columns);
                 }
             }
-            if i <= (rows - 1) * columns && !visited.contains(&(i + columns)) {
+            if i < (rows - 1) * columns && !visited.contains(&(i + columns)) {
                 if self.cells[i + columns] == current_color {
                     queue.push_back(i + columns);
                 } else if self.cells[i + columns] == new_color {
@@ -160,9 +141,12 @@ impl Grid {
                 }
             }
         }
-        println!("Changed the color of {} cells", num_cells);
 
         while let Some(i) = frontier.pop_front() {
+            if visited.contains(&i) {
+                continue;
+            }
+
             visited.insert(i);
             num_cells += 1;
             if i % columns > 0 && self.cells[i - 1] == new_color && !visited.contains(&(i - 1)) {
@@ -178,17 +162,13 @@ impl Grid {
             {
                 frontier.push_back(i - columns);
             }
-            if i <= (rows - 1) * columns && self.cells[i + columns] == new_color &&
+            if i < (rows - 1) * columns && self.cells[i + columns] == new_color &&
                 !visited.contains(&(i + columns))
             {
                 frontier.push_back(i + columns);
             }
         }
 
-        println!(
-            "The connected of component of 0 now contains {} cells",
-            num_cells
-        );
         num_cells
     }
 }
@@ -206,6 +186,7 @@ const TITLE: &'static str = "Flood-It";
 
 fn main() {
     use glium::glutin::{ContextBuilder, EventsLoop, WindowBuilder};
+    use glutin::{Event, WindowEvent};
 
     let mut events_loop = EventsLoop::new();
     let window = WindowBuilder::new().with_title(TITLE);
@@ -257,12 +238,13 @@ fn main() {
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
     let params = glium::DrawParameters {
-        backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
+        backface_culling: glium::draw_parameters::BackfaceCullingMode::CullCounterClockwise,
         ..Default::default()
     };
 
-    let mut grid = Grid::new(8, 14);
+    let mut grid = Grid::new(6, 14);
 
+    let mut cursor_position = (0.0, 0.0);
     let mut closed = false;
     while !closed {
         let mut target = display.draw();
@@ -281,7 +263,7 @@ fn main() {
             uniform! {
             matrix: [
                 [ratio_x, 0.0, 0.0, 0.0],
-                [0.0, ratio_y, 0.0, 0.0],
+                [0.0, -ratio_y, 0.0, 0.0],
                 [0.0, 0.0, 1.0, 0.0],
                 [0.0, 0.0, 0.0, 1.0_f32],
             ]
@@ -316,15 +298,50 @@ fn main() {
 
         target.finish().unwrap();
 
-        events_loop.poll_events(|event| if let glutin::Event::WindowEvent {
-            event, ..
-        } = event
-        {
-            match event {
-                glutin::WindowEvent::Closed => closed = true,
-                _ => (),
+        events_loop.poll_events(|event| match event {
+            Event::WindowEvent { event, .. } => {
+                match event {
+                    WindowEvent::Closed => closed = true,
+                    WindowEvent::MouseMoved { position, .. } => cursor_position = position,
+                    WindowEvent::MouseInput {
+                        state: glium::glutin::ElementState::Released,
+                        button: glium::glutin::MouseButton::Left,
+                        ..
+                    } => {
+                        let offsets = {
+                            let offset = (width as f64 - height as f64).abs() / 2.0;
+                            if screen_aspect_ratio < grid_aspect_ratio {
+                                (offset, 0.0)
+                            } else {
+                                (0.0, offset)
+                            }
+                        };
+                        if cursor_position.0 - offsets.0 >= 0.0 &&
+                            cursor_position.1 - offsets.1 >= 0.0
+                        {
+                            let column = ((cursor_position.0 - offsets.0) * grid.width as f64 /
+                                              (width as f64 - 2.0 * offsets.0))
+                                .floor() as u8;
+                            let row = ((cursor_position.1 - offsets.1) * grid.height as f64 /
+                                           (height as f64 - 2.0 * offsets.1))
+                                .floor() as u8;
+                            let component = grid.click(row, column);
+                            if let Some(n) = component {
+                                if n == grid.cells.len() {
+                                    if grid.num_clicks <= grid.max_clicks {
+                                        println!("You have won using {} moves.", grid.num_clicks);
+                                    } else {
+                                        println!("You lose. You took {} moves but should have finished in {}.", grid.num_clicks, grid.max_clicks);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _ => (),
+                }
             }
-        })
+            _ => (),
+        });
     }
 }
 
