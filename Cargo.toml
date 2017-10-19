@@ -1,0 +1,8 @@
+[package]
+authors = ["Colin Benner <colin@yzhs.de>"]
+name = "flood-it"
+version = "0.1.0"
+
+[dependencies]
+glium = "0.18.0"
+rand = "0.3.17"
