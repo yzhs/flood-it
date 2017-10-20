@@ -44,6 +44,7 @@ struct Grid {
     height: u8,
 
     cells: Vec<Color>,
+    population: Vec<u16>,
 
     max_clicks: u16,
     num_clicks: u16,
@@ -59,12 +60,17 @@ impl Grid {
             .map(|_| COLORS[between.ind_sample(&mut rng)])
             .collect();
         let max_clicks = 25 * 2 * size as u16 * num_colors as u16 / (2 * 14 * 6);
+        let mut population = vec![0; COLORS.len()];
+        for &c in &cells {
+            population[c as usize] += 1;
+        }
 
         Self {
             width: size,
             height: size,
 
             cells,
+            population,
 
             max_clicks,
             num_clicks: 0,
@@ -79,20 +85,31 @@ impl Grid {
         self.cells[0]
     }
 
-    pub fn click(&mut self, row: u8, column: u8) -> Option<usize> {
+    fn solved(&self) -> bool {
+        let mut colors_present = 0;
+        for &x in &self.population {
+            if x > 0 {
+                colors_present += 1;
+            }
+        }
+        colors_present == 1
+    }
+
+    pub fn click(&mut self, row: u8, column: u8) -> bool {
         let i = self.index(row, column);
         let new_color = self.cells[i];
         if self.current_color() == new_color {
-            return None;
+            return false;
         }
 
         self.num_clicks += 1;
-        Some(self.flood(new_color))
+        self.flood(new_color);
+        self.solved()
     }
 
     /// Flood the grid from the top left cell and return the number of cell which are connected to
     /// the top left cell by cells of indentical color.
-    fn flood(&mut self, new_color: Color) -> usize {
+    fn flood(&mut self, new_color: Color) {
         let current_color = self.current_color();
 
         let rows = self.height as usize;
@@ -101,75 +118,38 @@ impl Grid {
         let mut visited = HashSet::new();
         let mut queue = VecDeque::new();
         queue.push_back(0);
-        let mut frontier = VecDeque::new();
 
-        let mut num_cells = 0;
         while let Some(i) = queue.pop_front() {
             if self.cells[i] == new_color {
                 continue;
             }
-            num_cells += 1;
+            let c = self.cells[i];
+            self.population[c as usize] -= 1;
             self.cells[i] = new_color;
+            self.population[new_color as usize] += 1;
             visited.insert(i);
 
-            if i % columns > 0 && !visited.contains(&(i - 1)) {
-                if self.cells[i - 1] == current_color {
-                    queue.push_back(i - 1);
-                } else if self.cells[i - 1] == new_color {
-                    frontier.push_back(i - 1);
-                }
+            if i % columns > 0 && self.cells[i - 1] == current_color &&
+                !visited.contains(&(i - 1))
+            {
+                queue.push_back(i - 1);
             }
-            if i % columns < columns - 1 && !visited.contains(&(i + 1)) {
-                if self.cells[i + 1] == current_color {
-                    queue.push_back(i + 1);
-                } else if self.cells[i + 1] == new_color {
-                    frontier.push_back(i + 1);
-                }
-            }
-            if i >= columns && !visited.contains(&(i - columns)) {
-                if self.cells[i - columns] == current_color {
-                    queue.push_back(i - columns);
-                } else if self.cells[i - columns] == new_color {
-                    frontier.push_back(i - columns);
-                }
-            }
-            if i < (rows - 1) * columns && !visited.contains(&(i + columns)) {
-                if self.cells[i + columns] == current_color {
-                    queue.push_back(i + columns);
-                } else if self.cells[i + columns] == new_color {
-                    frontier.push_back(i + columns);
-                }
-            }
-        }
-
-        while let Some(i) = frontier.pop_front() {
-            if visited.contains(&i) {
-                continue;
-            }
-
-            visited.insert(i);
-            num_cells += 1;
-            if i % columns > 0 && self.cells[i - 1] == new_color && !visited.contains(&(i - 1)) {
-                frontier.push_back(i - 1);
-            }
-            if i % columns < columns - 1 && self.cells[i + 1] == new_color &&
+            if i % columns < columns - 1 && self.cells[i + 1] == current_color &&
                 !visited.contains(&(i + 1))
             {
-                frontier.push_back(i + 1);
+                queue.push_back(i + 1);
             }
-            if i >= columns && self.cells[i - columns] == new_color &&
+            if i >= columns && self.cells[i - columns] == current_color &&
                 !visited.contains(&(i - columns))
             {
-                frontier.push_back(i - columns);
+                queue.push_back(i - columns);
             }
-            if i < (rows - 1) * columns && self.cells[i + columns] == new_color &&
+            if i < (rows - 1) * columns && self.cells[i + columns] == current_color &&
                 !visited.contains(&(i + columns))
             {
-                frontier.push_back(i + columns);
+                queue.push_back(i + columns);
             }
         }
-
-        num_cells
     }
 }
 
@@ -325,14 +305,11 @@ fn main() {
                             let row = ((cursor_position.1 - offsets.1) * grid.height as f64 /
                                            (height as f64 - 2.0 * offsets.1))
                                 .floor() as u8;
-                            let component = grid.click(row, column);
-                            if let Some(n) = component {
-                                if n == grid.cells.len() {
+                            if grid.click(row, column) {
                                     if grid.num_clicks <= grid.max_clicks {
-                                        println!("You have won using {} moves.", grid.num_clicks);
+                                        println!("You win! You used {} out of {} available moves.", grid.num_clicks, grid.max_clicks);
                                     } else {
                                         println!("You lose. You took {} moves but should have finished in {}.", grid.num_clicks, grid.max_clicks);
-                                    }
                                 }
                             }
                         }
