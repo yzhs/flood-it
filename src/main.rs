@@ -1,5 +1,6 @@
 #![feature(rand)]
 
+extern crate clap;
 #[macro_use]
 extern crate glium;
 extern crate rand;
@@ -212,8 +213,49 @@ const FRAGMENT_SHADER: &str = r#"
 "#;
 
 fn main() {
+    use clap::{App, Arg};
     use glium::glutin::{ContextBuilder, EventsLoop, WindowBuilder};
     use glutin::{Event, WindowEvent};
+
+    let matches = App::new(TITLE)
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .arg(
+            Arg::with_name("colors")
+                .takes_value(true)
+                .help("The number of different colors")
+                .default_value("6"),
+        )
+        .arg(
+            Arg::with_name("size")
+                .takes_value(true)
+                .help("The height and width of the grid")
+                .default_value("14"),
+        )
+        .get_matches();
+
+    let colors = {
+        let tmp: u8 = matches
+            .value_of("colors")
+            .and_then(|x| x.parse().ok())
+            .unwrap_or(6);
+        if tmp < 3 || tmp > 8 {
+            panic!("Flood-It only supports 3 through 8 (inclusive) colors.");
+        } else {
+            tmp
+        }
+    };
+    let size: u8 = {
+        let tmp: u8 = matches
+            .value_of("size")
+            .and_then(|x| x.parse().ok())
+            .unwrap_or(14);
+        if tmp < 2 {
+            panic!("Flood-It needs a grid of at least 2x2 cells.");
+        } else {
+            tmp
+        }
+    };
 
     let mut events_loop = EventsLoop::new();
     let window = WindowBuilder::new().with_title(TITLE);
@@ -230,7 +272,7 @@ fn main() {
         ..Default::default()
     };
 
-    let mut grid = Grid::new(6, 14);
+    let mut grid = Grid::new(colors, size);
     let grid_aspect_ratio = grid.aspect_ratio();
 
     let mut cursor_position = (0.0, 0.0);

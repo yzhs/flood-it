@@ -4,5 +4,6 @@ name = "flood-it"
 version = "0.1.0"
 
 [dependencies]
+clap = "2.26.2"
 glium = "0.18.0"
 rand = "0.3.17"
