@@ -1,5 +1,3 @@
-#![feature(rand)]
-
 extern crate clap;
 #[macro_use]
 extern crate glium;
