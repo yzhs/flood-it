@@ -2,6 +2,10 @@
 authors = ["Colin Benner <colin@yzhs.de>"]
 name = "flood-it"
 version = "0.1.0"
+description = "An OpenGL implementation of Jan Wolter's Flood-It using Glium"
+repository = "https://github.com/yzhs/flood-it"
+keywords = ["game", "opengl"]
+license = "MIT"
 
 [dependencies]
 clap = "2.26.2"
