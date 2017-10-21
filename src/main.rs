@@ -151,6 +151,10 @@ impl Grid {
             }
         }
     }
+
+    pub fn aspect_ratio(&self) -> f32 {
+        self.height as f32 / self.width as f32
+    }
 }
 
 
@@ -164,6 +168,46 @@ implement_vertex!(Vertex, color, position);
 
 const TITLE: &'static str = "Flood-It";
 
+const VERTEX_SHADER: &str = r#"
+    #version 140
+    in vec2 position;
+    in float color;
+    uniform mat4 matrix;
+    out float c;
+    void main() {
+        c = color;
+        gl_Position = matrix * vec4(position, 0.0, 1.0);
+    }
+"#;
+
+/// Map Color::* to RGB values.
+const FRAGMENT_SHADER: &str = r#"
+    #version 140
+    in float c;
+    out vec4 color;
+    void main() {
+        if (c <= 0.0)
+            color = vec4(1.0, 0.0, 0.0, 1.0);
+        else if (c <= 1.0)
+            color = vec4(1.0, 1.0, 0.0, 1.0);
+        else if (c <= 2.0)
+            color = vec4(0.0, 0.69, 0.0, 1.0);
+        else if (c <= 3.0)
+            color = vec4(1.0, 0.8, 0.4, 1.0);
+        else if (c <= 4.0)
+            color = vec4(0.5, 0.0, 0.5, 1.0);
+        else if (c <= 5.0)
+            color = vec4(0.0, 1.0, 1.0, 1.0);
+        else if (c <= 6.0)
+            color = vec4(0.0, 0.0, 1.0, 1.0);
+        else if (c <= 7.0)
+            color = vec4(1.0, 0.0, 1.0, 1.0);
+        else
+            // Should never happen
+            color = vec4(1.0, 1.0, 1.0, 1.0);
+    }
+"#;
+
 fn main() {
     use glium::glutin::{ContextBuilder, EventsLoop, WindowBuilder};
     use glutin::{Event, WindowEvent};
@@ -173,47 +217,8 @@ fn main() {
     let context = ContextBuilder::new();
     let display = glium::Display::new(window, context, &events_loop).unwrap();
 
-    let vertex_shader_src = r#"
-        #version 140
-        in vec2 position;
-        in float color;
-        uniform mat4 matrix;
-        out float c;
-        void main() {
-            c = color;
-            gl_Position = matrix * vec4(position, 0.0, 1.0);
-        }
-    "#;
-
-    let fragment_shader_src = r#"
-        #version 140
-        in float c;
-        out vec4 color;
-        void main() {
-            if (c <= 0.0)
-                color = vec4(1.0, 0.0, 0.0, 1.0);
-            else if (c <= 1.0)
-                color = vec4(1.0, 1.0, 0.0, 1.0);
-            else if (c <= 2.0)
-                color = vec4(0.0, 0.69, 0.0, 1.0);
-            else if (c <= 3.0)
-                color = vec4(1.0, 0.8, 0.4, 1.0);
-            else if (c <= 4.0)
-                color = vec4(0.5, 0.0, 0.5, 1.0);
-            else if (c <= 5.0)
-                color = vec4(0.0, 1.0, 1.0, 1.0);
-            else if (c <= 6.0)
-                color = vec4(0.0, 0.0, 1.0, 1.0);
-            else if (c <= 7.0)
-                color = vec4(1.0, 0.0, 1.0, 1.0);
-            else
-                color = vec4(1.0, 1.0, 1.0, 1.0);
-        }
-    "#;
-
-    let program =
-        glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)
-            .unwrap();
+    let program = glium::Program::from_source(&display, VERTEX_SHADER, FRAGMENT_SHADER, None)
+        .unwrap();
 
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
@@ -223,6 +228,7 @@ fn main() {
     };
 
     let mut grid = Grid::new(6, 14);
+    let grid_aspect_ratio = grid.aspect_ratio();
 
     let mut cursor_position = (0.0, 0.0);
     let mut closed = false;
@@ -231,12 +237,11 @@ fn main() {
         target.clear_color(0.0, 0.0, 0.0, 1.0);
         let (width, height) = target.get_dimensions();
         let screen_aspect_ratio = height as f32 / width as f32;
-        let grid_aspect_ratio = grid.height as f32 / grid.width as f32;
 
         let (ratio_x, ratio_y) = if screen_aspect_ratio < grid_aspect_ratio {
             (screen_aspect_ratio, 1.0)
         } else {
-            (1.0, 1.0 / screen_aspect_ratio)
+            (1.0, screen_aspect_ratio.recip())
         };
 
         let uniforms =
@@ -251,30 +256,26 @@ fn main() {
 
         let mut triangles = vec![];
 
-        for &color in COLORS.iter() {
-            for i in 0..grid.cells.len() {
-                let x = (i % grid.width as usize) as f32;
-                let y = (i / grid.width as usize) as f32;
-                if color != grid.cells[i] {
-                    continue;
-                }
+        for i in 0..grid.cells.len() {
+            let x = (i % grid.width as usize) as f32;
+            let y = (i / grid.width as usize) as f32;
 
-                let cell_size = 2.0 / grid.height.max(grid.width) as f32;
+            let cell_size = 2.0 / grid.height.max(grid.width) as f32;
 
-                let mut quad = generate_rectangle_vertices(
-                    x * cell_size - 1.0,
-                    y * cell_size - 1.0,
-                    (x + 1.0) * cell_size - 1.0,
-                    (y + 1.0) * cell_size - 1.0,
-                    color,
-                );
-                triangles.append(&mut quad);
-            }
-            let vertex_buffer = glium::VertexBuffer::new(&display, &triangles).unwrap();
-            target
-                .draw(&vertex_buffer, &indices, &program, &uniforms, &params)
-                .unwrap();
+            let mut quad = generate_rectangle_vertices(
+                x * cell_size - 1.0,
+                y * cell_size - 1.0,
+                (x + 1.0) * cell_size - 1.0,
+                (y + 1.0) * cell_size - 1.0,
+                grid.cells[i],
+            );
+            triangles.append(&mut quad);
         }
+
+        let vertex_buffer = glium::VertexBuffer::new(&display, &triangles).unwrap();
+        target
+            .draw(&vertex_buffer, &indices, &program, &uniforms, &params)
+            .unwrap();
 
         target.finish().unwrap();
 
