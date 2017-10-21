@@ -10,6 +10,9 @@ use glium::Surface;
 use glium::glutin;
 
 
+/// Maximum frames per second.
+const FPS: u32 = 30;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Color {
     Red,
@@ -231,8 +234,8 @@ fn main() {
     let grid_aspect_ratio = grid.aspect_ratio();
 
     let mut cursor_position = (0.0, 0.0);
-    let mut closed = false;
-    while !closed {
+
+    main_loop(|| {
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
         let (width, height) = target.get_dimensions();
@@ -279,11 +282,13 @@ fn main() {
 
         target.finish().unwrap();
 
+        let mut closed = false;
         events_loop.poll_events(|event| match event {
             Event::WindowEvent { event, .. } => {
                 match event {
                     WindowEvent::Closed => closed = true,
-                    WindowEvent::MouseMoved { position, .. } => cursor_position = position,
+                    WindowEvent::MouseMoved { position, .. } =>
+                        cursor_position = position,
                     WindowEvent::MouseInput {
                         state: glium::glutin::ElementState::Released,
                         button: glium::glutin::MouseButton::Left,
@@ -320,7 +325,8 @@ fn main() {
             }
             _ => (),
         });
-    }
+        !closed
+    });
 }
 
 fn generate_rectangle_vertices(
@@ -357,4 +363,19 @@ fn generate_rectangle_vertices(
             position: [left, top],
         },
     ]
+}
+
+fn main_loop<F: FnMut() -> bool>(mut callback: F) {
+    use std::time::{Duration, Instant};
+    use std::thread;
+
+    let one_frame = Duration::new(0, 10 ^ 9 / FPS + 1);
+    let mut last_frame = Instant::now();
+
+    while callback() {
+        let now = Instant::now();
+        let remaining = one_frame.checked_sub(now - last_frame).unwrap_or_default();
+        last_frame = now;
+        thread::sleep(remaining);
+    }
 }
