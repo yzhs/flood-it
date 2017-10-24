@@ -44,6 +44,7 @@ impl rand::Rand for Color {
 struct Grid {
     width: u8,
     height: u8,
+    num_colors: u8,
 
     cells: Vec<Color>,
     population: Vec<u16>,
@@ -70,6 +71,7 @@ impl Grid {
         Self {
             width: size,
             height: size,
+            num_colors,
 
             cells,
             population,
@@ -157,6 +159,22 @@ impl Grid {
     pub fn aspect_ratio(&self) -> f32 {
         self.height as f32 / self.width as f32
     }
+
+    pub fn reset(&mut self) {
+        use rand::distributions::{IndependentSample, Range};
+        let between = Range::new(0, self.num_colors as usize);
+        let mut rng = rand::thread_rng();
+
+        self.cells.iter_mut().for_each(|x| {
+            *x = COLORS[between.ind_sample(&mut rng)]
+        });
+
+        self.population = vec![0; COLORS.len()];
+        for &c in &self.cells {
+            self.population[c as usize] += 1;
+        }
+        self.num_clicks = 0;
+    }
 }
 
 
@@ -212,7 +230,7 @@ const FRAGMENT_SHADER: &str = r#"
 
 fn main() {
     use clap::{App, Arg};
-    use glium::glutin::{ContextBuilder, EventsLoop, WindowBuilder};
+    use glium::glutin::{ContextBuilder, ElementState, EventsLoop, KeyboardInput, WindowBuilder};
     use glutin::{Event, WindowEvent};
 
     let matches = App::new(TITLE)
@@ -329,6 +347,16 @@ fn main() {
                     WindowEvent::Closed => closed = true,
                     WindowEvent::MouseMoved { position, .. } =>
                         cursor_position = position,
+                    WindowEvent::KeyboardInput { input: KeyboardInput{virtual_keycode: Some(key), state: ElementState::Released, ..}, ..} => {
+                        use glium::glutin::VirtualKeyCode;
+                        match key {
+                            VirtualKeyCode::Space | VirtualKeyCode::N | VirtualKeyCode::R =>
+                                if grid.solved() {
+                                    grid.reset();
+                                }
+                            _ => (),
+                        }
+                    }
                     WindowEvent::MouseInput {
                         state: glium::glutin::ElementState::Released,
                         button: glium::glutin::MouseButton::Left,
