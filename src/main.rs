@@ -100,6 +100,10 @@ impl Grid {
     }
 
     pub fn click(&mut self, row: u8, column: u8) -> bool {
+        if row > self.height || column > self.width {
+            return false;
+        }
+
         let i = self.index(row, column);
         let new_color = self.cells[i];
         if self.current_color() == new_color {
