@@ -228,10 +228,8 @@ const FRAGMENT_SHADER: &str = r#"
     }
 "#;
 
-fn main() {
+fn parse_args() -> (u8, u8) {
     use clap::{App, Arg};
-    use glium::glutin::{ContextBuilder, ElementState, EventsLoop, KeyboardInput, WindowBuilder};
-    use glutin::{Event, WindowEvent};
 
     let matches = App::new(TITLE)
         .author(env!("CARGO_PKG_AUTHORS"))
@@ -272,6 +270,15 @@ fn main() {
             tmp
         }
     };
+
+    (colors, size)
+}
+
+fn main() {
+    use glium::glutin::{ContextBuilder, ElementState, EventsLoop, KeyboardInput, WindowBuilder};
+    use glutin::{Event, WindowEvent};
+
+    let (colors, size) = parse_args();
 
     let mut events_loop = EventsLoop::new();
     let window = WindowBuilder::new().with_title(TITLE);
