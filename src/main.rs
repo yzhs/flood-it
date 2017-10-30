@@ -100,7 +100,7 @@ impl Grid {
     }
 
     pub fn click(&mut self, row: u8, column: u8) -> bool {
-        if row > self.height || column > self.width {
+        if row >= self.height || column >= self.width {
             return false;
         }
 
