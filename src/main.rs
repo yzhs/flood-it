@@ -197,6 +197,17 @@ impl Grid {
         }
         self.num_clicks = 0;
     }
+
+    /// Render the grid to a texture containing one colored pixel for each cell.
+    pub fn render<T: glium::backend::Facade>(&self, display: &T) -> Texture2d {
+        let cell_colors: Vec<_> = self.cells.iter().map(|x| x.to_rgb()).collect();
+        let cell_image = RawImage2d::from_raw(
+            Cow::from(cell_colors),
+            self.width as u32,
+            self.height as u32,
+        );
+        Texture2d::new(display, cell_image).unwrap()
+    }
 }
 
 
@@ -321,14 +332,7 @@ fn main() {
             (1.0, screen_aspect_ratio.recip())
         };
 
-        // Create a texture representation of the colored grid
-        let cell_colors: Vec<_> = grid.cells.iter().map(|x| x.to_rgb()).collect();
-        let cell_image = RawImage2d::from_raw(
-            Cow::from(cell_colors),
-            grid.width as u32,
-            grid.height as u32,
-        );
-        let cell_texture = Texture2d::new(&display, cell_image).unwrap();
+        let cell_texture = grid.render(&display);
 
         let uniforms =
             uniform! {
