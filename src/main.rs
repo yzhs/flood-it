@@ -375,6 +375,7 @@ fn main() {
                                     grid.reset();
                                 }
                             }
+                            VirtualKeyCode::Q => closed = true,
                             _ => (),
                         }
                     }
