@@ -35,6 +35,21 @@ const COLORS: &[Color] = &[
     Color::Fuchsia,
 ];
 
+impl Color {
+    fn to_rgb(self) -> (u8, u8, u8) {
+        match self {
+            Color::Red => (255, 0, 0),
+            Color::Yellow => (255, 255, 0),
+            Color::Green => (0, 176, 0),
+            Color::LightBrown => (255, 204, 102),
+            Color::Purple => (128, 0, 128),
+            Color::Cyan => (0, 255, 255),
+            Color::Blue => (0, 0, 255),
+            Color::Fuchsia => (255, 0, 255),
+        }
+    }
+}
+
 impl rand::Rand for Color {
     fn rand<R: rand::Rng>(rng: &mut R) -> Self {
         *rng.choose(COLORS).unwrap()
@@ -184,22 +199,24 @@ impl Grid {
 
 #[derive(Copy, Clone)]
 struct Vertex {
-    color: f32,
     position: [f32; 2],
 }
 
-implement_vertex!(Vertex, color, position);
+implement_vertex!(Vertex, position);
 
-const TITLE: &'static str = "Flood-It";
+const TITLE: &str = "Flood-It";
 
 const VERTEX_SHADER: &str = r#"
     #version 140
-    in vec2 position;
-    in float color;
+
+    in  vec2 position;
+    out vec2 v_tex_coords;
+
+    uniform vec2 size;
     uniform mat4 matrix;
-    out float c;
+
     void main() {
-        c = color;
+        v_tex_coords = 0.5 * (position + vec2(1.0, 1.0));
         gl_Position = matrix * vec4(position, 0.0, 1.0);
     }
 "#;
@@ -207,28 +224,14 @@ const VERTEX_SHADER: &str = r#"
 /// Map Color::* to RGB values.
 const FRAGMENT_SHADER: &str = r#"
     #version 140
-    in float c;
+
+    in  vec2 v_tex_coords;
     out vec4 color;
+
+    uniform sampler2D colors;
+
     void main() {
-        if (c <= 0.0)
-            color = vec4(1.0, 0.0, 0.0, 1.0);
-        else if (c <= 1.0)
-            color = vec4(1.0, 1.0, 0.0, 1.0);
-        else if (c <= 2.0)
-            color = vec4(0.0, 0.69, 0.0, 1.0);
-        else if (c <= 3.0)
-            color = vec4(1.0, 0.8, 0.4, 1.0);
-        else if (c <= 4.0)
-            color = vec4(0.5, 0.0, 0.5, 1.0);
-        else if (c <= 5.0)
-            color = vec4(0.0, 1.0, 1.0, 1.0);
-        else if (c <= 6.0)
-            color = vec4(0.0, 0.0, 1.0, 1.0);
-        else if (c <= 7.0)
-            color = vec4(1.0, 0.0, 1.0, 1.0);
-        else
-            // Should never happen
-            color = vec4(1.0, 1.0, 1.0, 1.0);
+        color = texture(colors, v_tex_coords);
     }
 "#;
 
@@ -279,8 +282,10 @@ fn parse_args() -> (u8, u8) {
 }
 
 fn main() {
+    use std::borrow::Cow;
     use glium::glutin::{ContextBuilder, ElementState, EventsLoop, KeyboardInput, WindowBuilder};
-    use glutin::{Event, WindowEvent};
+    use glium::glutin::{Event, WindowEvent};
+    use glium::texture::{RawImage2d, Texture2d, Texture2dDataSink};
 
     let (colors, size) = parse_args();
 
@@ -304,6 +309,9 @@ fn main() {
 
     let mut cursor_position = (0.0, 0.0);
 
+    let rect = generate_rectangle_vertices(-1.0, -1.0, 1.0, 1.0);
+    let vertex_buffer = glium::VertexBuffer::new(&display, &rect).unwrap();
+
     main_loop(|| {
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
@@ -316,35 +324,28 @@ fn main() {
             (1.0, screen_aspect_ratio.recip())
         };
 
+        // Create a texture representation of the colored grid
+        let cell_colors: Vec<_> = grid.cells.iter().map(|x| x.to_rgb()).collect();
+        let cell_image = RawImage2d::from_raw(
+            Cow::from(cell_colors),
+            grid.width as u32,
+            grid.height as u32,
+        );
+        let cell_texture = Texture2d::new(&display, cell_image).unwrap();
+
         let uniforms =
             uniform! {
-            matrix: [
-                [ratio_x, 0.0, 0.0, 0.0],
-                [0.0, -ratio_y, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [0.0, 0.0, 0.0, 1.0_f32],
-            ]
+                size: (grid.width as f32, grid.height as f32),
+                colors: cell_texture.sampled()
+                    //.wrap_function(glium::uniforms::SamplerWrapFunction::Clamp)
+                    .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
+                matrix: [
+                    [ratio_x, 0.0, 0.0, 0.0],
+                    [0.0, -ratio_y, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 0.0],
+                    [0.0, 0.0, 0.0, 1.0_f32],
+                ]
         };
-
-        let mut triangles = vec![];
-
-        for i in 0..grid.cells.len() {
-            let x = (i % grid.width as usize) as f32;
-            let y = (i / grid.width as usize) as f32;
-
-            let cell_size = 2.0 / grid.height.max(grid.width) as f32;
-
-            let mut quad = generate_rectangle_vertices(
-                x * cell_size - 1.0,
-                y * cell_size - 1.0,
-                (x + 1.0) * cell_size - 1.0,
-                (y + 1.0) * cell_size - 1.0,
-                grid.cells[i],
-            );
-            triangles.append(&mut quad);
-        }
-
-        let vertex_buffer = glium::VertexBuffer::new(&display, &triangles).unwrap();
         target
             .draw(&vertex_buffer, &indices, &program, &uniforms, &params)
             .unwrap();
@@ -408,39 +409,14 @@ fn main() {
     });
 }
 
-fn generate_rectangle_vertices(
-    left: f32,
-    bottom: f32,
-    right: f32,
-    top: f32,
-    color: Color,
-) -> Vec<Vertex> {
-    let color = color as u32 as f32;
+fn generate_rectangle_vertices(left: f32, bottom: f32, right: f32, top: f32) -> Vec<Vertex> {
     vec![
-        Vertex {
-            color,
-            position: [left, bottom],
-        },
-        Vertex {
-            color,
-            position: [right, bottom],
-        },
-        Vertex {
-            color,
-            position: [left, top],
-        },
-        Vertex {
-            color,
-            position: [right, bottom],
-        },
-        Vertex {
-            color,
-            position: [right, top],
-        },
-        Vertex {
-            color,
-            position: [left, top],
-        },
+        Vertex { position: [left, bottom] },
+        Vertex { position: [right, bottom] },
+        Vertex { position: [left, top] },
+        Vertex { position: [right, bottom] },
+        Vertex { position: [right, top] },
+        Vertex { position: [left, top] },
     ]
 }
 
