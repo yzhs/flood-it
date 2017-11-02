@@ -294,6 +294,70 @@ fn parse_args() -> (u8, u8) {
     (colors, size)
 }
 
+struct ScreenInfo {
+    is_dummy: bool,
+    width: f32,
+    height: f32,
+    offsets: (f64, f64),
+    matrix: [[f32; 4]; 4],
+}
+
+impl ScreenInfo {
+    pub fn dummy() -> ScreenInfo {
+        ScreenInfo {
+            is_dummy: true,
+            width: 0.0,
+            height: 0.0,
+            offsets: (0.0, 0.0),
+            matrix: [[0.0; 4]; 4],
+        }
+    }
+
+    pub fn new(width: u32, height: u32, grid_aspect_ratio: f32) -> ScreenInfo {
+        let aspect_ratio = height as f32 / width as f32;
+        let offsets = {
+            let offset = (width as f64 - height as f64).abs() / 2.0;
+            if aspect_ratio < grid_aspect_ratio {
+                (offset, 0.0)
+            } else {
+                (0.0, offset)
+            }
+        };
+        let (ratio_x, ratio_y) = if aspect_ratio < grid_aspect_ratio {
+            (aspect_ratio, 1.0)
+        } else {
+            (1.0, aspect_ratio.recip())
+        };
+
+        ScreenInfo {
+            is_dummy: false,
+            width: width as f32,
+            height: height as f32,
+            offsets,
+            matrix: [
+                [ratio_x, 0.0, 0.0, 0.0],
+                [0.0, -ratio_y, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0_f32],
+            ],
+        }
+    }
+
+    fn click(&self, x: f64, y: f64, width: u8, height: u8) -> Option<(u8, u8)> {
+        if x - self.offsets.1 >= 0.0 && y - self.offsets.1 >= 0.0 {
+            let column = ((x - self.offsets.0) * width as f64 /
+                              (self.width as f64 - 2.0 * self.offsets.0))
+                .floor() as u8;
+            let row = ((y - self.offsets.1) * height as f64 /
+                           (self.height as f64 - 2.0 * self.offsets.1))
+                .floor() as u8;
+            Some((column, row))
+        } else {
+            None
+        }
+    }
+}
+
 fn main() {
     let (colors, size) = parse_args();
 
@@ -320,17 +384,15 @@ fn main() {
     let rect = generate_rectangle_vertices(-1.0, -1.0, 1.0, 1.0);
     let vertex_buffer = glium::VertexBuffer::new(&display, &rect).unwrap();
 
+    let mut screen = ScreenInfo::dummy();
+
     main_loop(|| {
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
-        let (width, height) = target.get_dimensions();
-        let screen_aspect_ratio = height as f32 / width as f32;
-
-        let (ratio_x, ratio_y) = if screen_aspect_ratio < grid_aspect_ratio {
-            (screen_aspect_ratio, 1.0)
-        } else {
-            (1.0, screen_aspect_ratio.recip())
-        };
+        if screen.is_dummy {
+            let (width, height) = target.get_dimensions();
+            screen = ScreenInfo::new(width, height, grid_aspect_ratio);
+        }
 
         let cell_texture = grid.render(&display);
 
@@ -339,12 +401,7 @@ fn main() {
                 colors: cell_texture.sampled()
                     //.wrap_function(glium::uniforms::SamplerWrapFunction::Clamp)
                     .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
-                matrix: [
-                    [ratio_x, 0.0, 0.0, 0.0],
-                    [0.0, -ratio_y, 0.0, 0.0],
-                    [0.0, 0.0, 1.0, 0.0],
-                    [0.0, 0.0, 0.0, 1.0_f32],
-                ]
+                matrix: screen.matrix,
         };
         target
             .draw(&vertex_buffer, &indices, &program, &uniforms, &params)
@@ -357,6 +414,9 @@ fn main() {
             Event::WindowEvent { event, .. } => {
                 match event {
                     WindowEvent::Closed => closed = true,
+                    WindowEvent::Resized(width, height) => {
+                        screen = ScreenInfo::new(width, height, grid_aspect_ratio)
+                    }
 
                     WindowEvent::MouseMoved { position, .. } => cursor_position = position,
 
@@ -384,23 +444,14 @@ fn main() {
                         button: MouseButton::Left,
                         ..
                     } => {
-                        let offsets = {
-                            let offset = (width as f64 - height as f64).abs() / 2.0;
-                            if screen_aspect_ratio < grid_aspect_ratio {
-                                (offset, 0.0)
-                            } else {
-                                (0.0, offset)
-                            }
-                        };
-                        if cursor_position.0 - offsets.0 >= 0.0 &&
-                            cursor_position.1 - offsets.1 >= 0.0
+                        if let Some((column, row)) =
+                            screen.click(
+                                cursor_position.0,
+                                cursor_position.1,
+                                grid.width,
+                                grid.height,
+                            )
                         {
-                            let column = ((cursor_position.0 - offsets.0) * grid.width as f64 /
-                                              (width as f64 - 2.0 * offsets.0))
-                                .floor() as u8;
-                            let row = ((cursor_position.1 - offsets.1) * grid.height as f64 /
-                                           (height as f64 - 2.0 * offsets.1))
-                                .floor() as u8;
                             if grid.click(row, column) {
                                 if grid.num_clicks <= grid.max_clicks {
                                     println!(
