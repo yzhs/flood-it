@@ -3,213 +3,18 @@ extern crate clap;
 extern crate glium;
 extern crate rand;
 
-use std::borrow::Cow;
-use std::collections::{HashSet, VecDeque};
+mod grid;
+mod screen;
 
 use glium::Surface;
 use glium::glutin::{ContextBuilder, WindowBuilder, EventsLoop};
 use glium::glutin::{Event, WindowEvent, ElementState, KeyboardInput, MouseButton, VirtualKeyCode};
-use glium::texture::{RawImage2d, Texture2d, Texture2dDataSink};
 
+use grid::*;
+use screen::*;
 
 /// Maximum frames per second.
 const FPS: u32 = 30;
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-enum Color {
-    Red,
-    Yellow,
-    Green,
-    LightBrown,
-    Purple,
-    Cyan,
-    Blue,
-    Fuchsia,
-}
-
-const COLORS: &[Color] = &[
-    Color::Red,
-    Color::Yellow,
-    Color::Green,
-    Color::LightBrown,
-    Color::Purple,
-    Color::Cyan,
-    Color::Blue,
-    Color::Fuchsia,
-];
-
-impl Color {
-    fn to_rgb(self) -> (u8, u8, u8) {
-        match self {
-            Color::Red => (255, 0, 0),
-            Color::Yellow => (255, 255, 0),
-            Color::Green => (0, 176, 0),
-            Color::LightBrown => (255, 204, 102),
-            Color::Purple => (128, 0, 128),
-            Color::Cyan => (0, 255, 255),
-            Color::Blue => (0, 0, 255),
-            Color::Fuchsia => (255, 0, 255),
-        }
-    }
-}
-
-impl rand::Rand for Color {
-    fn rand<R: rand::Rng>(rng: &mut R) -> Self {
-        *rng.choose(COLORS).unwrap()
-    }
-}
-
-struct Grid {
-    width: u8,
-    height: u8,
-    num_colors: u8,
-
-    cells: Vec<Color>,
-    population: Vec<u16>,
-
-    max_clicks: u16,
-    num_clicks: u16,
-}
-
-impl Grid {
-    pub fn new(num_colors: u8, size: u8) -> Self {
-        use rand::distributions::{IndependentSample, Range};
-        let between = Range::new(0, num_colors as usize);
-        let mut rng = rand::thread_rng();
-
-        let cells: Vec<Color> = (0..size as u64 * size as u64)
-            .map(|_| COLORS[between.ind_sample(&mut rng)])
-            .collect();
-        let max_clicks = 25 * 2 * size as u16 * num_colors as u16 / (2 * 14 * 6);
-        let mut population = vec![0; COLORS.len()];
-        for &c in &cells {
-            population[c as usize] += 1;
-        }
-
-        Self {
-            width: size,
-            height: size,
-            num_colors,
-
-            cells,
-            population,
-
-            max_clicks,
-            num_clicks: 0,
-        }
-    }
-
-    fn index(&self, row: u8, column: u8) -> usize {
-        self.width as usize * row as usize + column as usize
-    }
-
-    fn current_color(&self) -> Color {
-        self.cells[0]
-    }
-
-    fn solved(&self) -> bool {
-        let mut colors_present = 0;
-        for &x in &self.population {
-            if x > 0 {
-                colors_present += 1;
-            }
-        }
-        colors_present == 1
-    }
-
-    pub fn click(&mut self, row: u8, column: u8) -> bool {
-        if row >= self.height || column >= self.width {
-            return false;
-        }
-
-        let i = self.index(row, column);
-        let new_color = self.cells[i];
-        if self.current_color() == new_color {
-            return false;
-        }
-
-        self.num_clicks += 1;
-        self.flood(new_color);
-        self.solved()
-    }
-
-    /// Flood the grid from the top left cell and return the number of cell which are connected to
-    /// the top left cell by cells of indentical color.
-    fn flood(&mut self, new_color: Color) {
-        let current_color = self.current_color();
-
-        let rows = self.height as usize;
-        let columns = self.width as usize;
-
-        let mut visited = HashSet::new();
-        let mut queue = VecDeque::new();
-        queue.push_back(0);
-
-        while let Some(i) = queue.pop_front() {
-            if self.cells[i] == new_color {
-                continue;
-            }
-            let c = self.cells[i];
-            self.population[c as usize] -= 1;
-            self.cells[i] = new_color;
-            self.population[new_color as usize] += 1;
-            visited.insert(i);
-
-            if i % columns > 0 && self.cells[i - 1] == current_color &&
-                !visited.contains(&(i - 1))
-            {
-                queue.push_back(i - 1);
-            }
-            if i % columns < columns - 1 && self.cells[i + 1] == current_color &&
-                !visited.contains(&(i + 1))
-            {
-                queue.push_back(i + 1);
-            }
-            if i >= columns && self.cells[i - columns] == current_color &&
-                !visited.contains(&(i - columns))
-            {
-                queue.push_back(i - columns);
-            }
-            if i < (rows - 1) * columns && self.cells[i + columns] == current_color &&
-                !visited.contains(&(i + columns))
-            {
-                queue.push_back(i + columns);
-            }
-        }
-    }
-
-    pub fn aspect_ratio(&self) -> f32 {
-        self.height as f32 / self.width as f32
-    }
-
-    pub fn reset(&mut self) {
-        use rand::distributions::{IndependentSample, Range};
-        let between = Range::new(0, self.num_colors as usize);
-        let mut rng = rand::thread_rng();
-
-        self.cells.iter_mut().for_each(|x| {
-            *x = COLORS[between.ind_sample(&mut rng)]
-        });
-
-        self.population = vec![0; COLORS.len()];
-        for &c in &self.cells {
-            self.population[c as usize] += 1;
-        }
-        self.num_clicks = 0;
-    }
-
-    /// Render the grid to a texture containing one colored pixel for each cell.
-    pub fn render<T: glium::backend::Facade>(&self, display: &T) -> Texture2d {
-        let cell_colors: Vec<_> = self.cells.iter().map(|x| x.to_rgb()).collect();
-        let cell_image = RawImage2d::from_raw(
-            Cow::from(cell_colors),
-            self.width as u32,
-            self.height as u32,
-        );
-        Texture2d::new(display, cell_image).unwrap()
-    }
-}
-
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -248,6 +53,7 @@ const FRAGMENT_SHADER: &str = r#"
     }
 "#;
 
+/// Handle command line arguments
 fn parse_args() -> (u8, u8) {
     use clap::{App, Arg};
 
@@ -269,21 +75,23 @@ fn parse_args() -> (u8, u8) {
         .get_matches();
 
     let colors = {
-        let tmp: u8 = matches
-            .value_of("colors")
-            .and_then(|x| x.parse().ok())
-            .unwrap_or(6);
-        if tmp < 3 || tmp > 8 {
-            panic!("Flood-It only supports 3 through 8 (inclusive) colors.");
+        let tmp: usize = matches.value_of("colors").unwrap().parse().expect(
+            "Invalid number of colors",
+        );
+        if tmp < 3 || tmp > COLORS.len() {
+            panic!(
+                "Flood-It only supports 3 through {} (inclusive) colors.",
+                COLORS.len()
+            );
         } else {
-            tmp
+            tmp as u8
         }
     };
+
     let size: u8 = {
-        let tmp: u8 = matches
-            .value_of("size")
-            .and_then(|x| x.parse().ok())
-            .unwrap_or(14);
+        let tmp: u8 = matches.value_of("size").unwrap().parse().expect(
+            "Invalid grid size",
+        );
         if tmp < 2 {
             panic!("Flood-It needs a grid of at least 2x2 cells.");
         } else {
@@ -292,70 +100,6 @@ fn parse_args() -> (u8, u8) {
     };
 
     (colors, size)
-}
-
-struct ScreenInfo {
-    is_dummy: bool,
-    width: f32,
-    height: f32,
-    offsets: (f64, f64),
-    matrix: [[f32; 4]; 4],
-}
-
-impl ScreenInfo {
-    pub fn dummy() -> ScreenInfo {
-        ScreenInfo {
-            is_dummy: true,
-            width: 0.0,
-            height: 0.0,
-            offsets: (0.0, 0.0),
-            matrix: [[0.0; 4]; 4],
-        }
-    }
-
-    pub fn new(width: u32, height: u32, grid_aspect_ratio: f32) -> ScreenInfo {
-        let aspect_ratio = height as f32 / width as f32;
-        let offsets = {
-            let offset = (width as f64 - height as f64).abs() / 2.0;
-            if aspect_ratio < grid_aspect_ratio {
-                (offset, 0.0)
-            } else {
-                (0.0, offset)
-            }
-        };
-        let (ratio_x, ratio_y) = if aspect_ratio < grid_aspect_ratio {
-            (aspect_ratio, 1.0)
-        } else {
-            (1.0, aspect_ratio.recip())
-        };
-
-        ScreenInfo {
-            is_dummy: false,
-            width: width as f32,
-            height: height as f32,
-            offsets,
-            matrix: [
-                [ratio_x, 0.0, 0.0, 0.0],
-                [0.0, -ratio_y, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [0.0, 0.0, 0.0, 1.0_f32],
-            ],
-        }
-    }
-
-    fn click(&self, x: f64, y: f64, width: u8, height: u8) -> Option<(u8, u8)> {
-        if x - self.offsets.1 >= 0.0 && y - self.offsets.1 >= 0.0 {
-            let column = ((x - self.offsets.0) * width as f64 /
-                              (self.width as f64 - 2.0 * self.offsets.0))
-                .floor() as u8;
-            let row = ((y - self.offsets.1) * height as f64 /
-                           (self.height as f64 - 2.0 * self.offsets.1))
-                .floor() as u8;
-            Some((column, row))
-        } else {
-            None
-        }
-    }
 }
 
 fn main() {
@@ -381,18 +125,20 @@ fn main() {
 
     let mut cursor_position = (0.0, 0.0);
 
-    let rect = generate_rectangle_vertices(-1.0, -1.0, 1.0, 1.0);
-    let vertex_buffer = glium::VertexBuffer::new(&display, &rect).unwrap();
+    let rect = {
+        let tmp = generate_rectangle_vertices(-1.0, -1.0, 1.0, 1.0);
+        glium::VertexBuffer::new(&display, &tmp).unwrap()
+    };
 
     let mut screen = ScreenInfo::dummy();
 
     main_loop(|| {
+        /*
+         * Rendering
+         */
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
-        if screen.is_dummy {
-            let (width, height) = target.get_dimensions();
-            screen = ScreenInfo::new(width, height, grid_aspect_ratio);
-        }
+        screen.init(|| (target.get_dimensions(), grid_aspect_ratio));
 
         let cell_texture = grid.render(&display);
 
@@ -404,18 +150,21 @@ fn main() {
                 matrix: screen.matrix,
         };
         target
-            .draw(&vertex_buffer, &indices, &program, &uniforms, &params)
+            .draw(&rect, &indices, &program, &uniforms, &params)
             .unwrap();
 
         target.finish().unwrap();
 
+        /*
+         * Handle events
+         */
         let mut closed = false;
         events_loop.poll_events(|event| match event {
             Event::WindowEvent { event, .. } => {
                 match event {
                     WindowEvent::Closed => closed = true,
                     WindowEvent::Resized(width, height) => {
-                        screen = ScreenInfo::new(width, height, grid_aspect_ratio)
+                        screen.resize(width, height, grid_aspect_ratio);
                     }
 
                     WindowEvent::MouseMoved { position, .. } => cursor_position = position,
@@ -448,23 +197,23 @@ fn main() {
                             screen.click(
                                 cursor_position.0,
                                 cursor_position.1,
-                                grid.width,
-                                grid.height,
+                                grid.width(),
+                                grid.height(),
                             )
                         {
                             if grid.click(row, column) {
-                                if grid.num_clicks <= grid.max_clicks {
+                                if grid.won() {
                                     println!(
                                         "You win! You used {} out of {} available moves.",
-                                        grid.num_clicks,
-                                        grid.max_clicks
+                                        grid.num_clicks(),
+                                        grid.max_clicks()
                                     );
                                 } else {
                                     println!(
                                         "You lose. You took {} moves but should have \
                                                  finished in {}.",
-                                        grid.num_clicks,
-                                        grid.max_clicks
+                                        grid.num_clicks(),
+                                        grid.max_clicks()
                                     );
                                 }
                             }
