@@ -215,7 +215,6 @@ const VERTEX_SHADER: &str = r#"
     in  vec2 position;
     out vec2 v_tex_coords;
 
-    uniform vec2 size;
     uniform mat4 matrix;
 
     void main() {
@@ -333,7 +332,6 @@ fn main() {
 
         let uniforms =
             uniform! {
-                size: (grid.width as f32, grid.height as f32),
                 colors: cell_texture.sampled()
                     //.wrap_function(glium::uniforms::SamplerWrapFunction::Clamp)
                     .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
