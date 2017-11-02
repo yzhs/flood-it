@@ -53,53 +53,30 @@ const FRAGMENT_SHADER: &str = r#"
     }
 "#;
 
-/// Handle command line arguments
-fn parse_args() -> (u8, u8) {
-    use clap::{App, Arg};
+fn generate_rectangle_vertices(left: f32, bottom: f32, right: f32, top: f32) -> Vec<Vertex> {
+    vec![
+        Vertex { position: [left, bottom] },
+        Vertex { position: [right, bottom] },
+        Vertex { position: [left, top] },
+        Vertex { position: [right, bottom] },
+        Vertex { position: [right, top] },
+        Vertex { position: [left, top] },
+    ]
+}
 
-    let matches = App::new(TITLE)
-        .author(env!("CARGO_PKG_AUTHORS"))
-        .version(env!("CARGO_PKG_VERSION"))
-        .arg(
-            Arg::with_name("colors")
-                .takes_value(true)
-                .help("The number of different colors")
-                .default_value("6"),
-        )
-        .arg(
-            Arg::with_name("size")
-                .takes_value(true)
-                .help("The height and width of the grid")
-                .default_value("14"),
-        )
-        .get_matches();
+fn main_loop<F: FnMut() -> bool>(mut callback: F) {
+    use std::time::{Duration, Instant};
+    use std::thread;
 
-    let colors = {
-        let tmp: usize = matches.value_of("colors").unwrap().parse().expect(
-            "Invalid number of colors",
-        );
-        if tmp < 3 || tmp > COLORS.len() {
-            panic!(
-                "Flood-It only supports 3 through {} (inclusive) colors.",
-                COLORS.len()
-            );
-        } else {
-            tmp as u8
-        }
-    };
+    let one_frame = Duration::new(0, 10 ^ 9 / FPS + 1);
+    let mut last_frame = Instant::now();
 
-    let size: u8 = {
-        let tmp: u8 = matches.value_of("size").unwrap().parse().expect(
-            "Invalid grid size",
-        );
-        if tmp < 2 {
-            panic!("Flood-It needs a grid of at least 2x2 cells.");
-        } else {
-            tmp
-        }
-    };
-
-    (colors, size)
+    while callback() {
+        let now = Instant::now();
+        let remaining = one_frame.checked_sub(now - last_frame).unwrap_or_default();
+        last_frame = now;
+        thread::sleep(remaining);
+    }
 }
 
 fn main() {
@@ -228,28 +205,51 @@ fn main() {
     });
 }
 
-fn generate_rectangle_vertices(left: f32, bottom: f32, right: f32, top: f32) -> Vec<Vertex> {
-    vec![
-        Vertex { position: [left, bottom] },
-        Vertex { position: [right, bottom] },
-        Vertex { position: [left, top] },
-        Vertex { position: [right, bottom] },
-        Vertex { position: [right, top] },
-        Vertex { position: [left, top] },
-    ]
-}
+/// Handle command line arguments
+fn parse_args() -> (u8, u8) {
+    use clap::{App, Arg};
 
-fn main_loop<F: FnMut() -> bool>(mut callback: F) {
-    use std::time::{Duration, Instant};
-    use std::thread;
+    let matches = App::new(TITLE)
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .arg(
+            Arg::with_name("colors")
+                .takes_value(true)
+                .help("The number of different colors")
+                .default_value("6"),
+        )
+        .arg(
+            Arg::with_name("size")
+                .takes_value(true)
+                .help("The height and width of the grid")
+                .default_value("14"),
+        )
+        .get_matches();
 
-    let one_frame = Duration::new(0, 10 ^ 9 / FPS + 1);
-    let mut last_frame = Instant::now();
+    let colors = {
+        let tmp: usize = matches.value_of("colors").unwrap().parse().expect(
+            "Invalid number of colors",
+        );
+        if tmp < 3 || tmp > COLORS.len() {
+            panic!(
+                "Flood-It only supports 3 through {} (inclusive) colors.",
+                COLORS.len()
+            );
+        } else {
+            tmp as u8
+        }
+    };
 
-    while callback() {
-        let now = Instant::now();
-        let remaining = one_frame.checked_sub(now - last_frame).unwrap_or_default();
-        last_frame = now;
-        thread::sleep(remaining);
-    }
+    let size: u8 = {
+        let tmp: u8 = matches.value_of("size").unwrap().parse().expect(
+            "Invalid grid size",
+        );
+        if tmp < 2 {
+            panic!("Flood-It needs a grid of at least 2x2 cells.");
+        } else {
+            tmp
+        }
+    };
+
+    (colors, size)
 }
