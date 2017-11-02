@@ -357,18 +357,28 @@ fn main() {
             Event::WindowEvent { event, .. } => {
                 match event {
                     WindowEvent::Closed => closed = true,
-                    WindowEvent::MouseMoved { position, .. } =>
-                        cursor_position = position,
-                    WindowEvent::KeyboardInput { input: KeyboardInput{virtual_keycode: Some(key), state: ElementState::Released, ..}, ..} => {
+
+                    WindowEvent::MouseMoved { position, .. } => cursor_position = position,
+
+                    WindowEvent::KeyboardInput {
+                        input: KeyboardInput {
+                            virtual_keycode: Some(key),
+                            state: ElementState::Released,
+                            ..
+                        },
+                        ..
+                    } => {
                         use glium::glutin::VirtualKeyCode;
                         match key {
-                            VirtualKeyCode::Space | VirtualKeyCode::N | VirtualKeyCode::R =>
+                            VirtualKeyCode::Space | VirtualKeyCode::N | VirtualKeyCode::R => {
                                 if grid.solved() {
                                     grid.reset();
                                 }
+                            }
                             _ => (),
                         }
                     }
+
                     WindowEvent::MouseInput {
                         state: glium::glutin::ElementState::Released,
                         button: glium::glutin::MouseButton::Left,
@@ -392,10 +402,19 @@ fn main() {
                                            (height as f64 - 2.0 * offsets.1))
                                 .floor() as u8;
                             if grid.click(row, column) {
-                                    if grid.num_clicks <= grid.max_clicks {
-                                        println!("You win! You used {} out of {} available moves.", grid.num_clicks, grid.max_clicks);
-                                    } else {
-                                        println!("You lose. You took {} moves but should have finished in {}.", grid.num_clicks, grid.max_clicks);
+                                if grid.num_clicks <= grid.max_clicks {
+                                    println!(
+                                        "You win! You used {} out of {} available moves.",
+                                        grid.num_clicks,
+                                        grid.max_clicks
+                                    );
+                                } else {
+                                    println!(
+                                        "You lose. You took {} moves but should have \
+                                                 finished in {}.",
+                                        grid.num_clicks,
+                                        grid.max_clicks
+                                    );
                                 }
                             }
                         }
