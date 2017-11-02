@@ -3,10 +3,13 @@ extern crate clap;
 extern crate glium;
 extern crate rand;
 
+use std::borrow::Cow;
 use std::collections::{HashSet, VecDeque};
 
 use glium::Surface;
-use glium::glutin;
+use glium::glutin::{ContextBuilder, WindowBuilder, EventsLoop};
+use glium::glutin::{Event, WindowEvent, ElementState, KeyboardInput, MouseButton, VirtualKeyCode};
+use glium::texture::{RawImage2d, Texture2d, Texture2dDataSink};
 
 
 /// Maximum frames per second.
@@ -282,11 +285,6 @@ fn parse_args() -> (u8, u8) {
 }
 
 fn main() {
-    use std::borrow::Cow;
-    use glium::glutin::{ContextBuilder, ElementState, EventsLoop, KeyboardInput, WindowBuilder};
-    use glium::glutin::{Event, WindowEvent};
-    use glium::texture::{RawImage2d, Texture2d, Texture2dDataSink};
-
     let (colors, size) = parse_args();
 
     let mut events_loop = EventsLoop::new();
@@ -368,7 +366,6 @@ fn main() {
                         },
                         ..
                     } => {
-                        use glium::glutin::VirtualKeyCode;
                         match key {
                             VirtualKeyCode::Space | VirtualKeyCode::N | VirtualKeyCode::R => {
                                 if grid.solved() {
@@ -381,8 +378,8 @@ fn main() {
                     }
 
                     WindowEvent::MouseInput {
-                        state: glium::glutin::ElementState::Released,
-                        button: glium::glutin::MouseButton::Left,
+                        state: ElementState::Released,
+                        button: MouseButton::Left,
                         ..
                     } => {
                         let offsets = {
