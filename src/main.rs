@@ -108,94 +108,103 @@ fn main() {
     };
 
     let mut screen = ScreenInfo::dummy();
+    let mut cell_texture = grid.render(&display);
 
     main_loop(|| {
         /*
          * Rendering
          */
-        let mut target = display.draw();
-        target.clear_color(0.0, 0.0, 0.0, 1.0);
-        screen.init(|| (target.get_dimensions(), grid_aspect_ratio));
+        {
+            let mut target = display.draw();
+            target.clear_color(0.0, 0.0, 0.0, 1.0);
+            screen.init(|| (target.get_dimensions(), grid_aspect_ratio));
 
-        let cell_texture = grid.render(&display);
+            let uniforms =
+                uniform! {
+                    colors: cell_texture.sampled()
+                        //.wrap_function(glium::uniforms::SamplerWrapFunction::Clamp)
+                        .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
+                        matrix: screen.matrix,
+                };
+            target
+                .draw(&rect, &indices, &program, &uniforms, &params)
+                .unwrap();
 
-        let uniforms =
-            uniform! {
-                colors: cell_texture.sampled()
-                    //.wrap_function(glium::uniforms::SamplerWrapFunction::Clamp)
-                    .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
-                matrix: screen.matrix,
-        };
-        target
-            .draw(&rect, &indices, &program, &uniforms, &params)
-            .unwrap();
-
-        target.finish().unwrap();
+            target.finish().unwrap();
+        }
 
         /*
          * Handle events
          */
         let mut closed = false;
-        events_loop.poll_events(|event| if let Event::WindowEvent { event, .. } = event {
-            match event {
-                WindowEvent::Closed => closed = true,
-                WindowEvent::Resized(width, height) => {
-                    screen.resize(width, height, grid_aspect_ratio);
-                }
+        events_loop.poll_events(|event| {
+            let mut changed = false;
+            if let Event::WindowEvent { event, .. } = event {
+                match event {
+                    WindowEvent::Closed => closed = true,
+                    WindowEvent::Resized(width, height) => {
+                        screen.resize(width, height, grid_aspect_ratio);
+                    }
 
-                WindowEvent::MouseMoved { position, .. } => cursor_position = position,
+                    WindowEvent::MouseMoved { position, .. } => cursor_position = position,
 
-                WindowEvent::KeyboardInput {
-                    input: KeyboardInput {
-                        virtual_keycode: Some(key),
-                        state: ElementState::Released,
+                    WindowEvent::KeyboardInput {
+                        input: KeyboardInput {
+                            virtual_keycode: Some(key),
+                            state: ElementState::Released,
+                            ..
+                        },
                         ..
-                    },
-                    ..
-                } => {
-                    match key {
-                        VirtualKeyCode::Space | VirtualKeyCode::N | VirtualKeyCode::R => {
-                            if grid.solved() {
-                                grid.reset();
+                    } => {
+                        match key {
+                            VirtualKeyCode::Space | VirtualKeyCode::N | VirtualKeyCode::R => {
+                                if grid.solved() {
+                                    grid.reset();
+                                    changed = true;
+                                }
                             }
+                            VirtualKeyCode::Q => closed = true,
+                            _ => (),
                         }
-                        VirtualKeyCode::Q => closed = true,
-                        _ => (),
                     }
-                }
 
-                WindowEvent::MouseInput {
-                    state: ElementState::Released,
-                    button: MouseButton::Left,
-                    ..
-                } => {
-                    if let Some((column, row)) =
-                            cursor_position.0,
-                            cursor_position.1,
-                            grid.width(),
-                            grid.height(),
-                        )
-                    {
-                        if grid.click(row, column) {
-                            if grid.won() {
-                                println!(
-                                    "You win! You used {} out of {} available moves.",
-                                    grid.num_clicks(),
-                                    grid.max_clicks()
-                                );
-                            } else {
-                                println!(
-                                    "You lose. You took {} moves but should have \
+                    WindowEvent::MouseInput {
+                        state: ElementState::Released,
+                        button: MouseButton::Left,
+                        ..
+                    } => {
+                        if let Some((column, row)) =
                             screen.cursor_to_grid_coords(
+                                cursor_position.0,
+                                cursor_position.1,
+                                grid.width(),
+                                grid.height(),
+                            )
+                        {
+                            changed = true;
+                            if grid.click(row, column) {
+                                if grid.won() {
+                                    println!(
+                                        "You win! You used {} out of {} available moves.",
+                                        grid.num_clicks(),
+                                        grid.max_clicks()
+                                    );
+                                } else {
+                                    println!(
+                                        "You lose. You took {} moves but should have \
                                                  finished in {}.",
-                                    grid.num_clicks(),
-                                    grid.max_clicks()
-                                );
+                                        grid.num_clicks(),
+                                        grid.max_clicks()
+                                    );
+                                }
                             }
                         }
                     }
+                    _ => (),
                 }
-                _ => (),
+            }
+            if changed {
+                cell_texture = grid.render(&display);
             }
         });
         !closed
