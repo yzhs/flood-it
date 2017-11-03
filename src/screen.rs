@@ -21,11 +21,11 @@ impl ScreenInfo {
 
     pub fn click(&self, x: f64, y: f64, width: u8, height: u8) -> Option<(u8, u8)> {
         if x - self.offsets.1 >= 0.0 && y - self.offsets.1 >= 0.0 {
-            let column = ((x - self.offsets.0) * width as f64 /
-                              (self.width as f64 - 2.0 * self.offsets.0))
+            let column = ((x - self.offsets.0) * f64::from(width) /
+                              (f64::from(self.width) - 2.0 * self.offsets.0))
                 .floor() as u8;
-            let row = ((y - self.offsets.1) * height as f64 /
-                           (self.height as f64 - 2.0 * self.offsets.1))
+            let row = ((y - self.offsets.1) * f64::from(height) /
+                           (f64::from(self.height) - 2.0 * self.offsets.1))
                 .floor() as u8;
             Some((column, row))
         } else {
@@ -43,7 +43,7 @@ impl ScreenInfo {
     pub fn resize(&mut self, width: u32, height: u32, grid_aspect_ratio: f32) {
         let aspect_ratio = height as f32 / width as f32;
 
-        let offset = (width as f64 - height as f64).abs() / 2.0;
+        let offset = (f64::from(width) - f64::from(height)).abs() / 2.0;
         if aspect_ratio < grid_aspect_ratio {
             self.offsets.0 = offset;
         } else {

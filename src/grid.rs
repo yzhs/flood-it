@@ -65,10 +65,10 @@ impl Grid {
         let between = Range::new(0, num_colors as usize);
         let mut rng = ::rand::thread_rng();
 
-        let cells: Vec<Color> = (0..size as u64 * size as u64)
+        let cells: Vec<Color> = (0..u16::from(size) * u16::from(size))
             .map(|_| COLORS[between.ind_sample(&mut rng)])
             .collect();
-        let max_clicks = 25 * 2 * size as u16 * num_colors as u16 / (2 * 14 * 6);
+        let max_clicks = 25 * 2 * u16::from(size) * u16::from(num_colors) / (2 * 14 * 6);
         let mut population = vec![0; COLORS.len()];
         for &c in &cells {
             population[c as usize] += 1;
@@ -143,8 +143,8 @@ impl Grid {
     fn flood(&mut self, new_color: Color) {
         let current_color = self.current_color();
 
-        let rows = self.height as usize;
-        let columns = self.width as usize;
+        let rows = usize::from(self.height);
+        let columns = usize::from(self.width);
 
         let mut visited = HashSet::new();
         let mut queue = VecDeque::new();
@@ -184,7 +184,7 @@ impl Grid {
     }
 
     pub fn aspect_ratio(&self) -> f32 {
-        self.height as f32 / self.width as f32
+        f32::from(self.height) / f32::from(self.width)
     }
 
     pub fn reset(&mut self) {
@@ -208,8 +208,8 @@ impl Grid {
         let cell_colors: Vec<_> = self.cells.iter().map(|x| x.to_rgb()).collect();
         let cell_image = RawImage2d::from_raw(
             Cow::from(cell_colors),
-            self.width as u32,
-            self.height as u32,
+            u32::from(self.width),
+            u32::from(self.height),
         );
         Texture2d::new(display, cell_image).unwrap()
     }

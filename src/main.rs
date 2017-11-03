@@ -68,7 +68,7 @@ fn main_loop<F: FnMut() -> bool>(mut callback: F) {
     use std::time::{Duration, Instant};
     use std::thread;
 
-    let one_frame = Duration::new(0, 10 ^ 9 / FPS + 1);
+    let one_frame = Duration::new(0, 1_000_000_000 / FPS + 1);
     let mut last_frame = Instant::now();
 
     while callback() {
@@ -136,70 +136,67 @@ fn main() {
          * Handle events
          */
         let mut closed = false;
-        events_loop.poll_events(|event| match event {
-            Event::WindowEvent { event, .. } => {
-                match event {
-                    WindowEvent::Closed => closed = true,
-                    WindowEvent::Resized(width, height) => {
-                        screen.resize(width, height, grid_aspect_ratio);
-                    }
-
-                    WindowEvent::MouseMoved { position, .. } => cursor_position = position,
-
-                    WindowEvent::KeyboardInput {
-                        input: KeyboardInput {
-                            virtual_keycode: Some(key),
-                            state: ElementState::Released,
-                            ..
-                        },
-                        ..
-                    } => {
-                        match key {
-                            VirtualKeyCode::Space | VirtualKeyCode::N | VirtualKeyCode::R => {
-                                if grid.solved() {
-                                    grid.reset();
-                                }
-                            }
-                            VirtualKeyCode::Q => closed = true,
-                            _ => (),
-                        }
-                    }
-
-                    WindowEvent::MouseInput {
-                        state: ElementState::Released,
-                        button: MouseButton::Left,
-                        ..
-                    } => {
-                        if let Some((column, row)) =
-                            screen.click(
-                                cursor_position.0,
-                                cursor_position.1,
-                                grid.width(),
-                                grid.height(),
-                            )
-                        {
-                            if grid.click(row, column) {
-                                if grid.won() {
-                                    println!(
-                                        "You win! You used {} out of {} available moves.",
-                                        grid.num_clicks(),
-                                        grid.max_clicks()
-                                    );
-                                } else {
-                                    println!(
-                                        "You lose. You took {} moves but should have \
-                                                 finished in {}.",
-                                        grid.num_clicks(),
-                                        grid.max_clicks()
-                                    );
-                                }
-                            }
-                        }
-                    }
-                    _ => (),
+        events_loop.poll_events(|event| if let Event::WindowEvent { event, .. } = event {
+            match event {
+                WindowEvent::Closed => closed = true,
+                WindowEvent::Resized(width, height) => {
+                    screen.resize(width, height, grid_aspect_ratio);
                 }
+
+                WindowEvent::MouseMoved { position, .. } => cursor_position = position,
+
+                WindowEvent::KeyboardInput {
+                    input: KeyboardInput {
+                        virtual_keycode: Some(key),
+                        state: ElementState::Released,
+                        ..
+                    },
+                    ..
+                } => {
+                    match key {
+                        VirtualKeyCode::Space | VirtualKeyCode::N | VirtualKeyCode::R => {
+                            if grid.solved() {
+                                grid.reset();
+                            }
+                        }
+                        VirtualKeyCode::Q => closed = true,
+                        _ => (),
+                    }
+                }
+
+                WindowEvent::MouseInput {
+                    state: ElementState::Released,
+                    button: MouseButton::Left,
+                    ..
+                } => {
+                    if let Some((column, row)) =
+                        screen.click(
+                            cursor_position.0,
+                            cursor_position.1,
+                            grid.width(),
+                            grid.height(),
+                        )
+                    {
+                        if grid.click(row, column) {
+                            if grid.won() {
+                                println!(
+                                    "You win! You used {} out of {} available moves.",
+                                    grid.num_clicks(),
+                                    grid.max_clicks()
+                                );
+                            } else {
+                                println!(
+                                    "You lose. You took {} moves but should have \
+                                                 finished in {}.",
+                                    grid.num_clicks(),
+                                    grid.max_clicks()
+                                );
+                            }
+                        }
+                    }
+                }
+                _ => (),
             }
-            _ => (),
         });
         !closed
     });
