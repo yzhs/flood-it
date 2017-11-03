@@ -170,7 +170,6 @@ fn main() {
                     ..
                 } => {
                     if let Some((column, row)) =
-                        screen.click(
                             cursor_position.0,
                             cursor_position.1,
                             grid.width(),
@@ -187,6 +186,7 @@ fn main() {
                             } else {
                                 println!(
                                     "You lose. You took {} moves but should have \
+                            screen.cursor_to_grid_coords(
                                                  finished in {}.",
                                     grid.num_clicks(),
                                     grid.max_clicks()

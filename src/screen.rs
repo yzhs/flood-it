@@ -19,7 +19,7 @@ impl ScreenInfo {
         }
     }
 
-    pub fn click(&self, x: f64, y: f64, width: u8, height: u8) -> Option<(u8, u8)> {
+    pub fn cursor_to_grid_coords(&self, x: f64, y: f64, width: u8, height: u8) -> Option<(u8, u8)> {
         if x - self.offsets.1 >= 0.0 && y - self.offsets.1 >= 0.0 {
             let column = ((x - self.offsets.0) * f64::from(width) /
                               (f64::from(self.width) - 2.0 * self.offsets.0))
