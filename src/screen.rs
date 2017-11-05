@@ -1,7 +1,9 @@
+use types::*;
+
 pub struct ScreenInfo {
     pub width: f32,
     pub height: f32,
-    pub offsets: (f64, f64),
+    pub offsets: Position<f64>,
     pub matrix: [[f32; 4]; 4],
 }
 
@@ -10,20 +12,22 @@ impl ScreenInfo {
         ScreenInfo {
             width: 0.0,
             height: 0.0,
-            offsets: (0.0, 0.0),
+            offsets: Position(0.0.into(), 0.0.into()),
             matrix: [[0.0; 4]; 4],
         }
     }
 
-    pub fn cursor_to_grid_coords(&self, x: f64, y: f64, width: u8, height: u8) -> Option<(u8, u8)> {
-        if x - self.offsets.1 >= 0.0 && y - self.offsets.1 >= 0.0 {
-            let column = ((x - self.offsets.0) * f64::from(width) /
-                              (f64::from(self.width) - 2.0 * self.offsets.0))
+    pub fn cursor_to_grid_coords(&self, pos: Position<f64>, size: Size) -> Option<Position> {
+        let Position(x, y) = pos - self.offsets;
+        let Size(width, height) = size;
+        if x >= Column(0.0) && y >= Row(0.0) {
+            let column = (x.0 * f64::from(width.0) /
+                              (f64::from(self.width) - (self.offsets.0 * 2.0).0))
                 .floor() as u8;
-            let row = ((y - self.offsets.1) * f64::from(height) /
-                           (f64::from(self.height) - 2.0 * self.offsets.1))
+            let row = (y.0 * f64::from(height.0) /
+                           (f64::from(self.height) - (self.offsets.1 * 2.0).0))
                 .floor() as u8;
-            Some((column, row))
+            Some(Position(Column(column), Row(row)))
         } else {
             None
         }
@@ -34,9 +38,9 @@ impl ScreenInfo {
 
         let offset = (f64::from(width) - f64::from(height)).abs() / 2.0;
         self.offsets = if aspect_ratio < grid_aspect_ratio {
-            (offset, 0.0)
+            Position(offset.into(), 0.0.into())
         } else {
-            (0.0, offset)
+            Position(0.0.into(), offset.into())
         };
 
         let (ratio_x, ratio_y) = if aspect_ratio < grid_aspect_ratio {

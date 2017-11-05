@@ -3,6 +3,8 @@ use std::collections::{HashSet, VecDeque};
 
 use glium::texture::{RawImage2d, Texture2d, Texture2dDataSink};
 
+use types::*;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Color {
     Red,
@@ -42,15 +44,15 @@ impl Color {
 }
 
 pub struct Grid {
-    width: u8,
-    height: u8,
-    num_colors: u8,
+    width: Width,
+    height: Height,
+    num_colors: NumberOfColors,
 
     cells: Vec<Color>,
     population: Vec<u16>,
 
-    max_clicks: u16,
-    num_clicks: u16,
+    max_clicks: NumberOfClicks,
+    num_clicks: NumberOfClicks,
 }
 
 impl Grid {
@@ -69,33 +71,32 @@ impl Grid {
         }
 
         Self {
-            width: size,
-            height: size,
-            num_colors,
+            width: ::types::Width(size),
+            height: Height(size),
+            num_colors: NumberOfColors(num_colors),
 
             cells,
             population,
 
-            max_clicks,
-            num_clicks: 0,
+            max_clicks: NumberOfClicks(max_clicks),
+            num_clicks: NumberOfClicks(0),
         }
     }
 
-    pub fn width(&self) -> u8 {
-        self.width
+    pub fn size(&self) -> Size {
+        Size(self.width, self.height)
     }
-    pub fn height(&self) -> u8 {
-        self.height
-    }
-    pub fn num_clicks(&self) -> u16 {
+    pub fn num_clicks(&self) -> NumberOfClicks {
         self.num_clicks
     }
-    pub fn max_clicks(&self) -> u16 {
+    pub fn max_clicks(&self) -> NumberOfClicks {
         self.max_clicks
     }
 
-    fn index(&self, row: u8, column: u8) -> usize {
-        self.width as usize * row as usize + column as usize
+    fn index(&self, row: Row, column: Column) -> Index {
+        Index(
+            usize::from(self.width.0) * usize::from(row.0) + usize::from(column.0),
+        )
     }
 
     fn current_color(&self) -> Color {
@@ -116,18 +117,18 @@ impl Grid {
         self.solved() && self.num_clicks <= self.max_clicks
     }
 
-    pub fn click(&mut self, row: u8, column: u8) -> bool {
+    pub fn click(&mut self, row: Row, column: Column) -> bool {
         if row >= self.height || column >= self.width {
             return false;
         }
 
         let i = self.index(row, column);
-        let new_color = self.cells[i];
+        let new_color = self.cells[i.0];
         if self.current_color() == new_color {
             return false;
         }
 
-        self.num_clicks += 1;
+        self.num_clicks.0 += 1;
         self.flood(new_color);
         self.solved()
     }
@@ -137,8 +138,8 @@ impl Grid {
     fn flood(&mut self, new_color: Color) {
         let current_color = self.current_color();
 
-        let rows = usize::from(self.height);
-        let columns = usize::from(self.width);
+        let rows = usize::from(self.height.0);
+        let columns = usize::from(self.width.0);
 
         let mut visited = HashSet::new();
         let mut queue = VecDeque::new();
@@ -178,12 +179,12 @@ impl Grid {
     }
 
     pub fn aspect_ratio(&self) -> f32 {
-        f32::from(self.height) / f32::from(self.width)
+        f32::from(self.height.0) / f32::from(self.width.0)
     }
 
     pub fn reset(&mut self) {
         use rand::distributions::{IndependentSample, Range};
-        let between = Range::new(0, self.num_colors as usize);
+        let between = Range::new(0, self.num_colors.0 as usize);
         let mut rng = ::rand::thread_rng();
 
         self.cells.iter_mut().for_each(|x| {
@@ -194,7 +195,7 @@ impl Grid {
         for &c in &self.cells {
             self.population[c as usize] += 1;
         }
-        self.num_clicks = 0;
+        self.num_clicks = NumberOfClicks(0);
     }
 
     /// Render the grid to a texture containing one colored pixel for each cell.
@@ -202,8 +203,8 @@ impl Grid {
         let cell_colors: Vec<_> = self.cells.iter().map(|x| x.to_rgb()).collect();
         let cell_image = RawImage2d::from_raw(
             Cow::from(cell_colors),
-            u32::from(self.width),
-            u32::from(self.height),
+            u32::from(self.width.0),
+            u32::from(self.height.0),
         );
         Texture2d::new(display, cell_image).unwrap()
     }

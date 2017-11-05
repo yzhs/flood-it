@@ -5,6 +5,7 @@ extern crate rand;
 
 mod grid;
 mod screen;
+mod types;
 
 use glium::Surface;
 use glium::glutin::{ContextBuilder, WindowBuilder, EventsLoop};
@@ -178,32 +179,29 @@ fn main() {
                         button: MouseButton::Left,
                         ..
                     } => {
-                        if let Some((column, row)) =
-                            screen.cursor_to_grid_coords(
-                                cursor_position.0,
-                                cursor_position.1,
-                                grid.width(),
-                                grid.height(),
-                            )
-                        {
-                            changed = true;
-                            if grid.click(row, column) {
-                                if grid.won() {
-                                    println!(
-                                        "You win! You used {} out of {} available moves.",
-                                        grid.num_clicks(),
-                                        grid.max_clicks()
-                                    );
-                                } else {
-                                    println!(
-                                        "You lose. You took {} moves but should have \
+                        screen
+                            .cursor_to_grid_coords(cursor_position.into(), grid.size())
+                            .map(|types::Position(column, row)| {
+                                changed = true;
+                                if grid.click(row, column) {
+                                    let num = grid.num_clicks().0;
+                                    let max = grid.max_clicks().0;
+                                    if grid.won() {
+                                        println!(
+                                            "You win! You used {} out of {} available moves.",
+                                            num,
+                                            max
+                                        );
+                                    } else {
+                                        println!(
+                                            "You lose. You took {} moves but should have \
                                                  finished in {}.",
-                                        grid.num_clicks(),
-                                        grid.max_clicks()
-                                    );
+                                            num,
+                                            max
+                                        );
+                                    }
                                 }
-                            }
-                        }
+                            });
                     }
                     _ => (),
                 }
