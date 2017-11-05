@@ -109,6 +109,7 @@ fn main() {
 
     let mut screen = ScreenInfo::dummy();
     let mut cell_texture = grid.render(&display);
+    let mut init = true;
 
     main_loop(|| {
         /*
@@ -117,7 +118,11 @@ fn main() {
         {
             let mut target = display.draw();
             target.clear_color(0.0, 0.0, 0.0, 1.0);
-            screen.init(|| (target.get_dimensions(), grid_aspect_ratio));
+            let (width, height) = target.get_dimensions();
+            if init {
+                screen.resize(width, height, grid_aspect_ratio);
+                init = false;
+            }
 
             let uniforms =
                 uniform! {

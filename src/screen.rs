@@ -1,7 +1,4 @@
 pub struct ScreenInfo {
-    /// True before the screen size is known. Never goes back to true once the screen size is
-    /// known.
-    not_initialized: bool,
     pub width: f32,
     pub height: f32,
     pub offsets: (f64, f64),
@@ -11,7 +8,6 @@ pub struct ScreenInfo {
 impl ScreenInfo {
     pub fn dummy() -> ScreenInfo {
         ScreenInfo {
-            not_initialized: true,
             width: 0.0,
             height: 0.0,
             offsets: (0.0, 0.0),
@@ -33,13 +29,6 @@ impl ScreenInfo {
         }
     }
 
-    pub fn init<F: FnMut() -> ((u32, u32), f32)>(&mut self, mut callback: F) {
-        if self.not_initialized {
-            let ((width, height), grid_aspect_ratio) = callback();
-            self.resize(width, height, grid_aspect_ratio);
-        }
-    }
-
     pub fn resize(&mut self, width: u32, height: u32, grid_aspect_ratio: f32) {
         let aspect_ratio = height as f32 / width as f32;
 
@@ -56,7 +45,6 @@ impl ScreenInfo {
             (1.0, aspect_ratio.recip())
         };
 
-        self.not_initialized = false;
         self.width = width as f32;
         self.height = height as f32;
         self.matrix = [
