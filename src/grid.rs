@@ -41,12 +41,6 @@ impl Color {
     }
 }
 
-impl ::rand::Rand for Color {
-    fn rand<R: ::rand::Rng>(rng: &mut R) -> Self {
-        *rng.choose(COLORS).unwrap()
-    }
-}
-
 pub struct Grid {
     width: u8,
     height: u8,
