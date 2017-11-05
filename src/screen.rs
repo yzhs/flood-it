@@ -44,11 +44,11 @@ impl ScreenInfo {
         let aspect_ratio = height as f32 / width as f32;
 
         let offset = (f64::from(width) - f64::from(height)).abs() / 2.0;
-        if aspect_ratio < grid_aspect_ratio {
-            self.offsets.0 = offset;
+        self.offsets = if aspect_ratio < grid_aspect_ratio {
+            (offset, 0.0)
         } else {
-            self.offsets.1 = offset;
-        }
+            (0.0, offset)
+        };
 
         let (ratio_x, ratio_y) = if aspect_ratio < grid_aspect_ratio {
             (aspect_ratio, 1.0)
