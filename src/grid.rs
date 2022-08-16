@@ -57,12 +57,11 @@ pub struct Grid {
 
 impl Grid {
     pub fn new(num_colors: u8, size: u8) -> Self {
-        use rand::distributions::{IndependentSample, Range};
-        let between = Range::new(0, num_colors as usize);
+        use rand::Rng;
         let mut rng = ::rand::thread_rng();
 
         let cells: Vec<Color> = (0..u16::from(size) * u16::from(size))
-            .map(|_| COLORS[between.ind_sample(&mut rng)])
+            .map(|_| COLORS[rng.gen_range(0..num_colors as usize)])
             .collect();
         let max_clicks = 25 * 2 * u16::from(size) * u16::from(num_colors) / (2 * 14 * 6);
         let mut population = vec![0; COLORS.len()];
@@ -94,9 +93,7 @@ impl Grid {
     }
 
     fn index(&self, row: Row, column: Column) -> Index {
-        Index(
-            usize::from(self.width.0) * usize::from(row.0) + usize::from(column.0),
-        )
+        Index(usize::from(self.width.0) * usize::from(row.0) + usize::from(column.0))
     }
 
     fn current_color(&self) -> Color {
@@ -155,23 +152,25 @@ impl Grid {
             self.population[new_color as usize] += 1;
             visited.insert(i);
 
-            if i % columns > 0 && self.cells[i - 1] == current_color &&
-                !visited.contains(&(i - 1))
+            if i % columns > 0 && self.cells[i - 1] == current_color && !visited.contains(&(i - 1))
             {
                 queue.push_back(i - 1);
             }
-            if i % columns < columns - 1 && self.cells[i + 1] == current_color &&
-                !visited.contains(&(i + 1))
+            if i % columns < columns - 1
+                && self.cells[i + 1] == current_color
+                && !visited.contains(&(i + 1))
             {
                 queue.push_back(i + 1);
             }
-            if i >= columns && self.cells[i - columns] == current_color &&
-                !visited.contains(&(i - columns))
+            if i >= columns
+                && self.cells[i - columns] == current_color
+                && !visited.contains(&(i - columns))
             {
                 queue.push_back(i - columns);
             }
-            if i < (rows - 1) * columns && self.cells[i + columns] == current_color &&
-                !visited.contains(&(i + columns))
+            if i < (rows - 1) * columns
+                && self.cells[i + columns] == current_color
+                && !visited.contains(&(i + columns))
             {
                 queue.push_back(i + columns);
             }
@@ -183,13 +182,13 @@ impl Grid {
     }
 
     pub fn reset(&mut self) {
-        use rand::distributions::{IndependentSample, Range};
-        let between = Range::new(0, self.num_colors.0 as usize);
+        use rand::Rng;
         let mut rng = ::rand::thread_rng();
+        let number_of_colors = self.num_colors.0 as usize;
 
-        self.cells.iter_mut().for_each(|x| {
-            *x = COLORS[between.ind_sample(&mut rng)]
-        });
+        self.cells
+            .iter_mut()
+            .for_each(|x| *x = COLORS[rng.gen_range(0..number_of_colors)]);
 
         self.population = vec![0; COLORS.len()];
         for &c in &self.cells {
