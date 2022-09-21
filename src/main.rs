@@ -152,7 +152,7 @@ fn main() {
                         screen.resize(width, height, grid_aspect_ratio);
                     }
 
-                    WindowEvent::MouseMoved { position, .. } => cursor_position = position,
+                    WindowEvent::CursorMoved { position, .. } => cursor_position = position,
 
                     WindowEvent::KeyboardInput {
                         input: KeyboardInput {
