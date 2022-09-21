@@ -8,6 +8,6 @@ repository = "https://github.com/yzhs/flood-it"
 version = "0.1.0"
 
 [dependencies]
-clap = "3.2.17"
+clap = "3.2.22"
 glium = "0.18.0"
 rand = "0.8.5"
