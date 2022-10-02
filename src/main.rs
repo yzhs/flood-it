@@ -19,6 +19,18 @@ use macroquad::prelude::*;
 // connected by an edge in the original graph if they had had the same colour (which they did
 // not).
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Colour {
+    Red,
+    Yellow,
+    Green,
+    LightBrown,
+    Purple,
+    Cyan,
+    Blue,
+    Fuchsia,
+}
+
 #[macroquad::main("BasicShapes")]
 async fn main() {
     loop {
