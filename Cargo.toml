@@ -1,13 +1,14 @@
 [package]
 authors = ["Colin Benner <colin@yzhs.de>"]
-description = "An OpenGL implementation of Jan Wolter's Flood-It using Glium"
+description = "An implementation of Jan Wolter's Flood-It using macroquad"
 keywords = ["game", "opengl"]
 license = "MIT"
 name = "flood-it"
 repository = "https://github.com/yzhs/flood-it"
 version = "0.1.0"
+edition = "2021"
 
 [dependencies]
 clap = "3.2.22"
-glium = "0.21.0"
+macroquad = "0.3.24"
 rand = "0.8.5"
