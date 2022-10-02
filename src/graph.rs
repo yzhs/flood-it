@@ -23,8 +23,8 @@ use crate::grid::Grid;
 // not).
 
 struct Position {
-    row: u8,
-    column: u8,
+    row: usize,
+    column: usize,
 }
 
 struct ConnectedComponent {
