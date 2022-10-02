@@ -3,8 +3,8 @@ use macroquad::rand::gen_range;
 use crate::colour::*;
 
 struct Grid {
-    number_of_rows: u8,
-    number_of_columns: u8,
+    number_of_rows: usize,
+    number_of_columns: usize,
 
     cells: Vec<Colour>,
 }
@@ -19,8 +19,8 @@ impl Grid {
         }
 
         Self {
-            number_of_columns: size as u8,
-            number_of_rows: size as u8,
+            number_of_columns: size,
+            number_of_rows: size,
             cells,
         }
     }
