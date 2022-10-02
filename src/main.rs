@@ -3,6 +3,9 @@ use std::collections::HashMap;
 use macroquad::prelude::*;
 use macroquad::rand::gen_range;
 
+mod colour;
+use crate::colour::*;
+
 // Represent the state of the game as a graph.  One node for each cell.  There is an edge between
 // two cells if and only if they are the same colour and have a distance of 1 according to the
 // Manhattan metric.
@@ -21,29 +24,6 @@ use macroquad::rand::gen_range;
 // connected components that have cells which share an edge, i.e. two cells which would have been
 // connected by an edge in the original graph if they had had the same colour (which they did
 // not).
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Colour {
-    Red,
-    Yellow,
-    Green,
-    LightBrown,
-    Purple,
-    Cyan,
-    Blue,
-    Fuchsia,
-}
-
-const AllColours: [Colour; 8] = [
-    Colour::Red,
-    Colour::Yellow,
-    Colour::Green,
-    Colour::LightBrown,
-    Colour::Purple,
-    Colour::Cyan,
-    Colour::Blue,
-    Colour::Fuchsia,
-];
 
 struct Grid {
     number_of_rows: u8,
