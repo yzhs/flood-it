@@ -22,6 +22,7 @@ use crate::grid::Grid;
 // connected by an edge in the original graph if they had had the same colour (which they did
 // not).
 
+#[derive(Eq, PartialEq, Hash)]
 struct Position {
     row: usize,
     column: usize,
