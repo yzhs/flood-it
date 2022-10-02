@@ -29,7 +29,7 @@ struct Position {
 
 struct ConnectedComponent {
     colour: Colour,
-    cells: Vec<Position>,
+    cells: HashSet<Position>,
 }
 
 struct Graph {
