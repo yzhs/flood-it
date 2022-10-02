@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use macroquad::prelude::*;
 
 // Represent the state of the game as a graph.  One node for each cell.  There is an edge between
@@ -29,6 +31,27 @@ pub enum Colour {
     Cyan,
     Blue,
     Fuchsia,
+}
+
+struct Grid {
+    number_of_rows: u8,
+    number_of_columns: u8,
+
+    cells: Vec<Colour>,
+}
+
+struct Position {
+    row: u8,
+    column: u8,
+}
+
+struct ConnectedComponent {
+    colour: Colour,
+    cells: Vec<Position>,
+}
+
+struct Graph {
+    neighours: HashMap<ConnectedComponent, Vec<ConnectedComponent>>,
 }
 
 #[macroquad::main("BasicShapes")]
