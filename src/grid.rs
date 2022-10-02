@@ -2,15 +2,15 @@ use macroquad::rand::gen_range;
 
 use crate::colour::*;
 
-struct Grid {
-    number_of_rows: usize,
-    number_of_columns: usize,
+pub struct Grid {
+    pub number_of_rows: usize,
+    pub number_of_columns: usize,
 
-    cells: Vec<Colour>,
+    pub cells: Vec<Colour>,
 }
 
 impl Grid {
-    fn generate(size: usize) -> Self {
+    pub fn generate(size: usize) -> Self {
         let mut cells = vec![Colour::Red; size*size];
         for i in 0..size {
             for j in 0..size {
