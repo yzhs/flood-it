@@ -32,7 +32,7 @@ fn draw_cell(grid_x: f32, grid_y: f32, cell_size: f32, position: &Position, colo
     );
 }
 
-#[macroquad::main("BasicShapes")]
+#[macroquad::main("Flood-It")]
 async fn main() {
     let size = 8;
     let grid = Grid::generate(size);
