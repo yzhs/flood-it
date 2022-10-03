@@ -10,7 +10,7 @@ pub enum Colour {
     Fuchsia,
 }
 
-pub const AllColours: [Colour; 8] = [
+pub const ALL_COLOURS: [Colour; 8] = [
     Colour::Red,
     Colour::Yellow,
     Colour::Green,
