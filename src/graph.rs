@@ -169,6 +169,16 @@ impl Graph {
 
         Grid { number_of_rows: rows, number_of_columns: columns, cells, }
     }
+
+    pub fn find_component(&self, position: Position) -> &ConnectedComponent {
+        for component in self.neighbours.keys() {
+            if component.cells.contains(&position) {
+                return component
+            }
+        }
+
+        unreachable!()
+    }
 }
 
 #[cfg(test)]
