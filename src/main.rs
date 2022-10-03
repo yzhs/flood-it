@@ -32,6 +32,21 @@ fn draw_cell(grid_x: f32, grid_y: f32, cell_size: f32, position: &Position, colo
     );
 }
 
+fn render(graph: &Graph) {
+    clear_background(BLACK);
+
+    let grid_size = screen_width().min(screen_height());
+    let grid_x = (screen_width() - grid_size) / 2.0;
+    let grid_y = (screen_height() - grid_size) / 2.0;
+    let cell_size = grid_size / graph.size as f32;
+
+    for component in graph.neighbours.keys() {
+        for position in &component.cells {
+            draw_cell(grid_x, grid_y, cell_size, position, component.colour);
+        }
+    }
+}
+
 #[macroquad::main("Flood-It")]
 async fn main() {
     let size = 8;
@@ -39,18 +54,7 @@ async fn main() {
     let mut graph = Graph::create(&grid);
 
     loop {
-        clear_background(BLACK);
-
-        let grid_size = screen_width().min(screen_height());
-        let grid_x = (screen_width() - grid_size) / 2.0;
-        let grid_y = (screen_height() - grid_size) / 2.0;
-        let cell_size = grid_size / size as f32;
-
-        for component in graph.neighbours.keys() {
-            for position in &component.cells {
-                draw_cell(grid_x, grid_y, cell_size, position, component.colour);
-            }
-        }
+        render(&graph);
 
         next_frame().await
     }
