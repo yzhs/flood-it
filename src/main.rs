@@ -84,6 +84,14 @@ impl Ui {
         }
     }
 
+    fn handle_click(&self, graph: &mut Graph) {
+        if is_mouse_button_pressed(MouseButton::Left) {
+            let (x, y) = mouse_position();
+            println!("Detected click at position ({x}, {y})")
+            println!("Detected click at cell ({rounded_x}, {rounded_y})")
+        }
+    }
+
     fn cell_size(&self) -> f32 {
         self.grid_size / self.size as f32
     }
@@ -103,10 +111,7 @@ async fn main() {
         }
 
 
-        if is_mouse_button_pressed(MouseButton::Left) {
-            let (x, y) = mouse_position();
-            println!("Detected click at position ({x}, {y})")
-        }
+        ui.handle_click(&mut graph);
 
         ui.resize();
         ui.render(&graph);
