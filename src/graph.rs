@@ -24,16 +24,16 @@ use crate::grid::Grid;
 // not).
 
 #[derive(Clone, Eq, PartialEq, Hash)]
-struct Position {
-    row: usize,
-    column: usize,
+pub struct Position {
+    pub row: usize,
+    pub column: usize,
 }
 
 #[derive(Clone)]
-struct ConnectedComponent {
+pub struct ConnectedComponent {
     counter: usize,
-    colour: Colour,
-    cells: HashSet<Position>,
+    pub colour: Colour,
+    pub cells: HashSet<Position>,
 }
 
 impl PartialEq for ConnectedComponent {
@@ -51,7 +51,7 @@ impl Hash for ConnectedComponent {
 }
 
 pub struct Graph {
-    neighbours: HashMap<ConnectedComponent, HashSet<ConnectedComponent>>,
+    pub neighbours: HashMap<ConnectedComponent, HashSet<ConnectedComponent>>,
 }
 
 fn find_connected_components(grid: &Grid) -> Vec<(ConnectedComponent, HashSet<usize>)> {
