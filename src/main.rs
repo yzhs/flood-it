@@ -101,7 +101,11 @@ impl Ui {
             let rounded_x = x.floor() as usize;
             let rounded_y = y.floor() as usize;
 
-            println!("Detected click at cell ({rounded_x}, {rounded_y})")
+            let clicked_cell_position = Position{column: rounded_x, row: rounded_y};
+            let clicked_component = graph.find_component(clicked_cell_position);
+            let colour = clicked_component.colour;
+
+            println!("Detected click at cell ({rounded_x}, {rounded_y}) with colour {colour:#?}")
         }
     }
 
