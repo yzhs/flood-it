@@ -58,6 +58,11 @@ async fn main() {
             break;
         }
 
+        if is_mouse_button_pressed(MouseButton::Left) {
+            let (x, y) = mouse_position();
+            println!("Detected click at position ({x}, {y})")
+        }
+
         render(&graph);
 
         next_frame().await
