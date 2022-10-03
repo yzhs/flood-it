@@ -13,7 +13,7 @@ async fn main() {
     let mut graph = Graph::create(&grid);
 
     loop {
-        clear_background(RED);
+        clear_background(BLACK);
 
         draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
         draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
