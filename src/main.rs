@@ -54,6 +54,10 @@ async fn main() {
     let mut graph = Graph::create(&grid);
 
     loop {
+        if let Some(KeyCode::Q) = get_last_key_pressed() {
+            break;
+        }
+
         render(&graph);
 
         next_frame().await
