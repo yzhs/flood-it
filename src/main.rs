@@ -32,18 +32,60 @@ fn draw_cell(grid_x: f32, grid_y: f32, cell_size: f32, position: &Position, colo
     );
 }
 
-fn render(graph: &Graph) {
-    clear_background(BLACK);
+struct Ui {
+    /// Size of the grid in cells.
+    size: usize,
 
-    let grid_size = screen_width().min(screen_height());
-    let grid_x = (screen_width() - grid_size) / 2.0;
-    let grid_y = (screen_height() - grid_size) / 2.0;
-    let cell_size = grid_size / graph.size as f32;
+    /// Size of the grid in pixels.  Assumes the grid is always square.
+    grid_size: f32,
 
-    for component in graph.neighbours.keys() {
-        for position in &component.cells {
-            draw_cell(grid_x, grid_y, cell_size, position, component.colour);
+    /// Offset of the grid relative to the whole window along the horizontal axis.
+    grid_x: f32,
+
+    /// Offset of the grid relative to the whole window along the vertical axis.
+    grid_y: f32,
+}
+
+impl Ui {
+    fn create(size: usize) -> Ui {
+        let mut ui = Ui{
+            size,
+            grid_size: 0.0,
+            grid_x: 0.0,
+            grid_y: 0.0,
+        };
+
+        ui.resize();
+
+        ui
+    }
+
+    fn resize(&mut self) {
+        let screen_height = screen_height();
+        let screen_width = screen_width();
+
+        let grid_size = screen_height.min(screen_width);
+        self.grid_size = grid_size;
+        self.grid_x = (screen_width - grid_size) / 2.0;
+        self.grid_y = (screen_height - grid_size) / 2.0;
+    }
+
+    fn render(&self, graph: &Graph) {
+        clear_background(BLACK);
+
+        let grid_x = self.grid_x;
+        let grid_y = self.grid_y;
+        let cell_size = self.cell_size();
+
+        for component in graph.neighbours.keys() {
+            for position in &component.cells {
+                draw_cell(grid_x, grid_y, cell_size, position, component.colour);
+            }
         }
+    }
+
+    fn cell_size(&self) -> f32 {
+        self.grid_size / self.size as f32
     }
 }
 
@@ -53,17 +95,21 @@ async fn main() {
     let grid = Grid::generate(size);
     let mut graph = Graph::create(&grid);
 
+    let mut ui = Ui::create(size);
+
     loop {
         if let Some(KeyCode::Q) = get_last_key_pressed() {
             break;
         }
+
 
         if is_mouse_button_pressed(MouseButton::Left) {
             let (x, y) = mouse_position();
             println!("Detected click at position ({x}, {y})")
         }
 
-        render(&graph);
+        ui.resize();
+        ui.render(&graph);
 
         next_frame().await
     }
