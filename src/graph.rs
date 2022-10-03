@@ -51,6 +51,7 @@ impl Hash for ConnectedComponent {
 }
 
 pub struct Graph {
+    pub size: usize,
     pub neighbours: HashMap<ConnectedComponent, HashSet<ConnectedComponent>>,
 }
 
@@ -151,7 +152,10 @@ impl Graph {
             neighbours.insert(component, neighbour_components);
         }
 
-        Self { neighbours }
+        Self {
+             size: grid.number_of_columns,
+             neighbours
+        }
     }
 
     fn to_grid(&self, rows: usize, columns: usize) -> Grid {
