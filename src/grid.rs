@@ -2,6 +2,7 @@ use macroquad::rand::gen_range;
 
 use crate::colour::*;
 
+#[derive(Debug, Eq, PartialEq)]
 pub struct Grid {
     pub number_of_rows: usize,
     pub number_of_columns: usize,
@@ -28,7 +29,7 @@ impl Grid {
 
 #[cfg(test)]
 mod test {
-    use crate::*;
+    use super::*;
 
     #[test]
     pub fn generates_grid_of_correct_size() {
