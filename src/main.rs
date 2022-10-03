@@ -10,14 +10,14 @@ mod grid;
 
 fn macroquad_colour(colour: Colour) -> Color {
     match colour {
-        Colour::Red => RED,
-        Colour::Yellow => YELLOW,
-        Colour::Green => GREEN,
-        Colour::LightBrown => LIGHTGRAY,
-        Colour::Purple => PURPLE,
-        Colour::Cyan => PINK,
-        Colour::Blue => BLUE,
-        Colour::Fuchsia => MAGENTA,
+        Colour::Red => color_u8!(255, 0, 0, 255),
+        Colour::Yellow => color_u8!(255, 255, 0, 255),
+        Colour::Green => color_u8!(0, 176, 0, 255),
+        Colour::LightBrown => color_u8!(255, 204, 102, 255),
+        Colour::Purple => color_u8!(128, 0, 128, 255),
+        Colour::Cyan => color_u8!(0, 255, 255, 255),
+        Colour::Blue => color_u8!(0, 0, 255, 255),
+        Colour::Fuchsia => color_u8!(255, 0, 255, 255),
     }
 }
 
