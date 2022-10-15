@@ -128,8 +128,7 @@ fn find_connected_components(grid: &Grid) -> Vec<(ConnectedComponent, HashSet<us
 
 impl Graph {
     pub fn create(grid: &Grid) -> Self {
-        let mut components_and_neighbours = find_connected_components(&grid);
-        components_and_neighbours.sort_by_key(|x| x.0.id);
+        let components_and_neighbours = find_connected_components(&grid);
 
         let mut components = HashMap::with_capacity(components_and_neighbours.len());
         let mut neighbours: HashMap<usize, HashSet<usize>> = HashMap::new();
