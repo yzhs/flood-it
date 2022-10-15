@@ -225,4 +225,32 @@ mod test {
 
         assert_eq!(graph.neighbours.len(), 2);
     }
+
+    #[test]
+    fn should_have_same_keys_for_components_and_neighbours_maps() {
+        let size = 4;
+        let grid = Grid::generate(size);
+
+        let graph = Graph::create(&grid);
+
+        let components_keys: HashSet<_> = graph.components.keys().collect();
+        let neighbours_keys: HashSet<_> = graph.neighbours.keys().collect();
+        assert_eq!(components_keys, neighbours_keys);
+    }
+
+    #[test]
+    fn should_contain_exactly_the_component_ids_as_keys() {
+        let size = 4;
+        let grid = Grid::generate(size);
+
+        let graph = Graph::create(&grid);
+
+        let component_keys: HashSet<_> = graph.components.keys().collect();
+        let component_ids: HashSet<_> = graph.components.values().map(|x| &x.id).collect();
+        assert_eq!(component_keys, component_ids);
+
+        for (id, component) in graph.components {
+            assert_eq!(id, component.id);
+        }
+    }
 }
