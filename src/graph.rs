@@ -31,14 +31,14 @@ pub struct Position {
 
 #[derive(Clone)]
 pub struct ConnectedComponent {
-    counter: usize,
+    id: usize,
     pub colour: Colour,
     pub cells: HashSet<Position>,
 }
 
 impl PartialEq for ConnectedComponent {
     fn eq(&self, other: &Self) -> bool {
-        self.counter == other.counter
+        self.id == other.id
     }
 }
 
@@ -46,7 +46,7 @@ impl Eq for ConnectedComponent {}
 
 impl Hash for ConnectedComponent {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.counter.hash(state);
+        self.id.hash(state);
     }
 }
 
@@ -113,7 +113,7 @@ fn find_connected_components(grid: &Grid) -> Vec<(ConnectedComponent, HashSet<us
             .collect();
 
         let component = ConnectedComponent {
-            counter,
+            id: counter,
             colour: grid.cells[*visited.iter().next().unwrap()],
             cells,
         };
@@ -128,13 +128,13 @@ fn find_connected_components(grid: &Grid) -> Vec<(ConnectedComponent, HashSet<us
 impl Graph {
     pub fn create(grid: &Grid) -> Self {
         let mut components_and_neighbours = find_connected_components(&grid);
-        components_and_neighbours.sort_by_key(|x| x.0.counter);
+        components_and_neighbours.sort_by_key(|x| x.0.id);
 
         let mut components = Vec::with_capacity(components_and_neighbours.len());
         let mut neighbours: HashMap<usize, HashSet<usize>> = HashMap::new();
 
         for (c, n) in components_and_neighbours.into_iter() {
-            let id = c.counter;
+            let id = c.id;
             components.push(c);
             neighbours.insert(id, n);
         }
