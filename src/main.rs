@@ -77,7 +77,7 @@ impl Ui {
         let grid_y = self.grid_y;
         let cell_size = self.cell_size();
 
-        for &component in graph.neighbours.keys() {
+        for component in graph.neighbours.keys() {
             for position in &graph.components[component].cells {
                 draw_cell(grid_x, grid_y, cell_size, position, graph.components[component].colour);
             }

@@ -51,7 +51,7 @@ impl Hash for ConnectedComponent {
 }
 
 pub struct Graph {
-    pub components: Vec<ConnectedComponent>,
+    pub components: HashMap<usize, ConnectedComponent>,
     pub neighbours: HashMap<usize, HashSet<usize>>,
 }
 
@@ -130,12 +130,12 @@ impl Graph {
         let mut components_and_neighbours = find_connected_components(&grid);
         components_and_neighbours.sort_by_key(|x| x.0.id);
 
-        let mut components = Vec::with_capacity(components_and_neighbours.len());
+        let mut components = HashMap::with_capacity(components_and_neighbours.len());
         let mut neighbours: HashMap<usize, HashSet<usize>> = HashMap::new();
 
         for (c, n) in components_and_neighbours.into_iter() {
             let id = c.id;
-            components.push(c);
+            components.insert(id, c);
             neighbours.insert(id, n);
         }
 
@@ -148,7 +148,7 @@ impl Graph {
     fn to_grid(&self, rows: usize, columns: usize) -> Grid {
         let mut cells = vec![Colour::Red; rows * columns];
 
-        for &component in self.neighbours.keys() {
+        for component in self.neighbours.keys() {
             for position in &self.components[component].cells {
                 cells[position.column + position.row * columns] = self.components[component].colour;
             }
@@ -162,7 +162,7 @@ impl Graph {
     }
 
     pub fn find_component(&self, position: &Position) -> &ConnectedComponent {
-        for &component in self.neighbours.keys() {
+        for component in self.neighbours.keys() {
             if self.components[component].cells.contains(&position) {
                 return &self.components[component];
             }
