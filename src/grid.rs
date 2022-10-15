@@ -12,7 +12,7 @@ pub struct Grid {
 
 impl Grid {
     pub fn generate(size: usize) -> Self {
-        let mut cells = vec![Colour::Red; size*size];
+        let mut cells = vec![Colour::Red; size * size];
         for i in 0..size {
             for j in 0..size {
                 cells[size * i + j] = ALL_COLOURS[gen_range(0, ALL_COLOURS.len())];
@@ -39,6 +39,6 @@ mod test {
 
         assert_eq!(grid.number_of_rows, size);
         assert_eq!(grid.number_of_columns, size);
-        assert_eq!(grid.cells.len(), size*size);
+        assert_eq!(grid.cells.len(), size * size);
     }
 }

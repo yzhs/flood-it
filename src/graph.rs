@@ -1,5 +1,5 @@
-use std::hash::Hash;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::hash::Hash;
 
 use crate::colour::Colour;
 use crate::grid::Grid;
@@ -86,13 +86,13 @@ fn find_connected_components(grid: &Grid) -> Vec<(ConnectedComponent, HashSet<us
             if i >= columns {
                 neighbouring_cells.push(i - columns)
             }
-            if i < (rows - 1 ) * columns {
+            if i < (rows - 1) * columns {
                 neighbouring_cells.push(i + columns)
             }
 
             for neighbour in neighbouring_cells {
                 if visited.contains(&neighbour) {
-                    continue
+                    continue;
                 }
 
                 if grid.cells[i] == grid.cells[neighbour] {
@@ -121,39 +121,43 @@ fn find_connected_components(grid: &Grid) -> Vec<(ConnectedComponent, HashSet<us
         components.push((component, neighbours));
     }
 
-    return components
+    return components;
 }
 
 impl Graph {
     pub fn create(grid: &Grid) -> Self {
         let components_and_neighbours = find_connected_components(&grid);
 
-        let map_cell_to_component: HashMap<Position, ConnectedComponent> = components_and_neighbours
-        .iter()
-        .flat_map(|(component, _)| {
-            component.cells
-            .iter()
-            .map(|cell| (cell.clone(), component.clone()))
-            .collect::<Vec<(Position, ConnectedComponent)>>()
-        })
-        .collect();
+        let map_cell_to_component: HashMap<Position, ConnectedComponent> =
+            components_and_neighbours
+                .iter()
+                .flat_map(|(component, _)| {
+                    component
+                        .cells
+                        .iter()
+                        .map(|cell| (cell.clone(), component.clone()))
+                        .collect::<Vec<(Position, ConnectedComponent)>>()
+                })
+                .collect();
 
-        let mut neighbours:  HashMap<ConnectedComponent, HashSet<ConnectedComponent>> = HashMap::new();
+        let mut neighbours: HashMap<ConnectedComponent, HashSet<ConnectedComponent>> =
+            HashMap::new();
 
         for (component, neighbour_cells) in components_and_neighbours {
             let mut neighbour_components: HashSet<ConnectedComponent> = HashSet::new();
 
             for cell in neighbour_cells {
-                let position = Position{column: cell % grid.number_of_columns, row: cell / grid.number_of_columns};
+                let position = Position {
+                    column: cell % grid.number_of_columns,
+                    row: cell / grid.number_of_columns,
+                };
                 neighbour_components.insert(map_cell_to_component[&position].clone());
             }
 
             neighbours.insert(component, neighbour_components);
         }
 
-        Self {
-             neighbours
-        }
+        Self { neighbours }
     }
 
     fn to_grid(&self, rows: usize, columns: usize) -> Grid {
@@ -165,13 +169,17 @@ impl Graph {
             }
         }
 
-        Grid { number_of_rows: rows, number_of_columns: columns, cells, }
+        Grid {
+            number_of_rows: rows,
+            number_of_columns: columns,
+            cells,
+        }
     }
 
     pub fn find_component(&self, position: Position) -> &ConnectedComponent {
         for component in self.neighbours.keys() {
             if component.cells.contains(&position) {
-                return component
+                return component;
             }
         }
 
@@ -196,10 +204,10 @@ mod test {
 
     #[test]
     fn should_have_one_component() {
-        let grid = Grid{
+        let grid = Grid {
             number_of_columns: 2,
-             number_of_rows: 2,
-             cells: vec![Colour::Red; 4]
+            number_of_rows: 2,
+            cells: vec![Colour::Red; 4],
         };
 
         let graph = Graph::create(&grid);
@@ -209,10 +217,10 @@ mod test {
 
     #[test]
     fn should_have_four_component() {
-        let grid = Grid{
+        let grid = Grid {
             number_of_columns: 2,
-             number_of_rows: 2,
-             cells: vec![Colour::Red, Colour::Yellow, Colour::Yellow, Colour::Red]
+            number_of_rows: 2,
+            cells: vec![Colour::Red, Colour::Yellow, Colour::Yellow, Colour::Red],
         };
 
         let graph = Graph::create(&grid);
@@ -222,10 +230,10 @@ mod test {
 
     #[test]
     fn should_have_two_component() {
-        let grid = Grid{
+        let grid = Grid {
             number_of_columns: 2,
-             number_of_rows: 2,
-             cells: vec![Colour::Red, Colour::Red, Colour::Yellow, Colour::Yellow]
+            number_of_rows: 2,
+            cells: vec![Colour::Red, Colour::Red, Colour::Yellow, Colour::Yellow],
         };
 
         let graph = Graph::create(&grid);

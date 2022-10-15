@@ -48,7 +48,7 @@ struct Ui {
 
 impl Ui {
     fn create(size: usize) -> Ui {
-        let mut ui = Ui{
+        let mut ui = Ui {
             size,
             grid_size: 0.0,
             grid_x: 0.0,
@@ -104,7 +104,10 @@ impl Ui {
         let rounded_x = x.floor() as usize;
         let rounded_y = y.floor() as usize;
 
-        let clicked_cell_position = Position{column: rounded_x, row: rounded_y};
+        let clicked_cell_position = Position {
+            column: rounded_x,
+            row: rounded_y,
+        };
         let clicked_component = graph.find_component(clicked_cell_position);
         let colour = clicked_component.colour;
 
@@ -128,7 +131,6 @@ async fn main() {
         if let Some(KeyCode::Q) = get_last_key_pressed() {
             break;
         }
-
 
         ui.handle_click(&mut graph);
 
