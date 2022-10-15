@@ -194,6 +194,57 @@ impl Graph {
 
         unreachable!()
     }
+
+    pub fn change_colour_of_component_at(&mut self, position: &Position, colour: Colour) {
+        let component_id = self.find_component(position).id;
+
+        // Remove the component which is to change colour
+        let mut component = self.components.remove(&component_id).unwrap();
+        let mut neighbours = self.neighbours.remove(&component_id).unwrap();
+
+        // Gather new cells for that component by combinging the cells of all
+        // its neighbours which already have the new colour.
+        let mut new_cells = HashSet::new();
+        // Gather the set of its new neighbours which is just the union of the
+        // sets of neighbours its neighbours with the new colour have.
+        let mut new_neighbours = HashSet::new();
+        let mut removed_neighbours = HashSet::new();
+
+        for id in &neighbours {
+            if *id != component_id && self.components[id].colour == colour {
+                let neighbour_component = self.components.remove(id).unwrap();
+                new_cells.extend(neighbour_component.cells.into_iter());
+                let set_of_neighbour_ids = self.neighbours.remove(&neighbour_component.id).unwrap();
+                new_neighbours.extend(set_of_neighbour_ids.into_iter());
+                removed_neighbours.insert(*id);
+            }
+        }
+
+        // Add new neighbours
+        neighbours.extend(new_neighbours.clone().into_iter());
+        // Remove the ID of the component itself
+        neighbours.remove(&component_id);
+        // and the IDs of the neighbours that were merged into the component
+        neighbours = neighbours.difference(&removed_neighbours).map(|&x| x).collect();
+
+        // Add the cells from the neighbours which now have the new colour
+        component.cells.extend(new_cells.into_iter());
+        // and update the colour.  With this, the component itself is done.
+        component.colour = colour;
+
+        // Fix the neighbour sets for all the remaining components
+        // All we have to do here is replace any of the indices in new_neighbours with component_id.
+        for (_, n) in self.neighbours.iter_mut() {
+            for incorporated_neighbour_id in &removed_neighbours {
+                n.remove(incorporated_neighbour_id);
+            }
+            n.insert(component_id);
+        }
+
+        // Put the component and neighbours back into the Graph
+        self.components.entry(component_id).or_insert(component);
+        self.neighbours.entry(component_id).or_insert(neighbours);
+    }
 }
 
 #[cfg(test)]
