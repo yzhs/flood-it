@@ -106,7 +106,7 @@ impl Ui {
         }
 
         if let Some(position) = self.cell_position(mouse_position()) {
-            let clicked_component = graph.find_component(position.clone());
+            let clicked_component = graph.find_component(&position);
             let colour = clicked_component.colour;
 
             println!("Detected click at cell ({}, {}) with colour {:#?}", position.column, position.row, colour)

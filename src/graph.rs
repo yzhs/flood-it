@@ -161,7 +161,7 @@ impl Graph {
         }
     }
 
-    pub fn find_component(&self, position: Position) -> &ConnectedComponent {
+    pub fn find_component(&self, position: &Position) -> &ConnectedComponent {
         for &component in self.neighbours.keys() {
             if self.components[component].cells.contains(&position) {
                 return &self.components[component];
