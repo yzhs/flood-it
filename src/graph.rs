@@ -23,13 +23,13 @@ use crate::grid::Grid;
 // connected by an edge in the original graph if they had had the same colour (which they did
 // not).
 
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Position {
     pub row: usize,
     pub column: usize,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ConnectedComponent {
     id: usize,
     pub colour: Colour,
@@ -50,6 +50,7 @@ impl Hash for ConnectedComponent {
     }
 }
 
+#[derive(Debug)]
 pub struct Graph {
     pub components: HashMap<usize, ConnectedComponent>,
     pub neighbours: HashMap<usize, HashSet<usize>>,

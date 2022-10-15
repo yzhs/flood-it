@@ -123,6 +123,7 @@ async fn main() {
     let size = 8;
     let grid = Grid::generate(size);
     let mut graph = Graph::create(&grid);
+    println!("{:#?}", graph);
 
     let mut ui = Ui::create(size);
 
