@@ -84,6 +84,10 @@ impl Ui {
         }
     }
 
+    fn cell_size(&self) -> f32 {
+        self.grid_size / self.size as f32
+    }
+
     fn cell_position(&self, raw_position: (f32, f32)) -> Option<Position> {
         let (raw_x, raw_y) = raw_position;
 
@@ -111,10 +115,6 @@ impl Ui {
 
             println!("Detected click at cell ({}, {}) with colour {:#?}", position.column, position.row, colour)
         }
-    }
-
-    fn cell_size(&self) -> f32 {
-        self.grid_size / self.size as f32
     }
 }
 
