@@ -84,12 +84,8 @@ impl Ui {
         }
     }
 
-    fn handle_click(&self, graph: &mut Graph) {
-        if !is_mouse_button_pressed(MouseButton::Left) {
-            return;
-        }
-
-        let (raw_x, raw_y) = mouse_position();
+    fn cell_position(&self, raw_position: (f32, f32)) -> Option<Position> {
+        let (raw_x, raw_y) = raw_position;
 
         let cell_size = self.cell_size();
         let x = (raw_x - self.grid_x) / cell_size;
@@ -98,20 +94,23 @@ impl Ui {
         let size = self.size as f32;
         if x < 0.0 || y < 0.0 || x > size || y > size {
             // Out of bounds, nothing to do
+            None
+        } else {
+            Some(Position{column: x.floor() as usize, row: y.floor() as usize})
+        }
+    }
+
+    fn handle_click(&self, graph: &mut Graph) {
+        if !is_mouse_button_pressed(MouseButton::Left) {
             return;
         }
 
-        let rounded_x = x.floor() as usize;
-        let rounded_y = y.floor() as usize;
+        if let Some(position) = self.cell_position(mouse_position()) {
+            let clicked_component = graph.find_component(position.clone());
+            let colour = clicked_component.colour;
 
-        let clicked_cell_position = Position {
-            column: rounded_x,
-            row: rounded_y,
-        };
-        let clicked_component = graph.find_component(clicked_cell_position);
-        let colour = clicked_component.colour;
-
-        println!("Detected click at cell ({rounded_x}, {rounded_y}) with colour {colour:#?}")
+            println!("Detected click at cell ({}, {}) with colour {:#?}", position.column, position.row, colour)
+        }
     }
 
     fn cell_size(&self) -> f32 {
