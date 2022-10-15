@@ -130,13 +130,37 @@ impl Graph {
     pub fn create(grid: &Grid) -> Self {
         let components_and_neighbours = find_connected_components(&grid);
 
-        let mut components = HashMap::with_capacity(components_and_neighbours.len());
+        let map_cell_to_component: HashMap<Position, ConnectedComponent> =
+            components_and_neighbours
+                .iter()
+                .flat_map(|(component, _)| {
+                    component
+                        .cells
+                        .iter()
+                        .map(|cell| (cell.clone(), component.clone()))
+                        .collect::<Vec<(Position, ConnectedComponent)>>()
+                })
+                .collect();
+
         let mut neighbours: HashMap<usize, HashSet<usize>> = HashMap::new();
 
+        for (component, neighbour_cells) in &components_and_neighbours {
+            let mut neighbour_components = HashSet::new();
+
+            for cell in neighbour_cells {
+                let position = Position {
+                    column: cell % grid.number_of_columns,
+                    row: cell / grid.number_of_columns,
+                };
+                neighbour_components.insert(map_cell_to_component[&position].id);
+            }
+            neighbours.insert(component.id, neighbour_components);
+        }
+
+        let mut components = HashMap::with_capacity(components_and_neighbours.len());
+
         for (c, n) in components_and_neighbours.into_iter() {
-            let id = c.id;
-            components.insert(id, c);
-            neighbours.insert(id, n);
+            components.insert(c.id, c);
         }
 
         Self {
