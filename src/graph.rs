@@ -277,4 +277,18 @@ mod test {
             assert_eq!(id, component.id);
         }
     }
+
+    #[test]
+    fn should_contain_only_component_ids_as_values_in_neighbours_map() {
+        let size = 4;
+        let grid = Grid::generate(size);
+
+        let graph = Graph::create(&grid);
+
+        let component_ids: HashSet<_> = graph.components.keys().map(|&x| x).collect();
+
+        for (_, neighbours) in graph.neighbours {
+            assert_eq!(neighbours.difference(&component_ids).collect::<HashSet<_>>().len(), 0);
+        }
+    }
 }
