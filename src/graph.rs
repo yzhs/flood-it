@@ -159,7 +159,7 @@ impl Graph {
 
         let mut components = HashMap::with_capacity(components_and_neighbours.len());
 
-        for (c, n) in components_and_neighbours.into_iter() {
+        for (c, _) in components_and_neighbours.into_iter() {
             components.insert(c.id, c);
         }
 
