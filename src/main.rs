@@ -2,11 +2,12 @@ use macroquad::prelude::*;
 
 use colour::Colour;
 use graph::{Graph, Position};
-use grid::Grid;
+use game::{Game, GameState};
 
 mod colour;
 mod graph;
 mod grid;
+mod game;
 
 fn macroquad_colour(colour: Colour) -> Color {
     match colour {
@@ -116,27 +117,6 @@ impl Ui {
             println!("Detected click at cell ({}, {}) with colour {:#?}", position.column, position.row, colour);
 
             graph.change_colour_of_component_at(&Position{column: 0_usize, row: 0_usize}, colour);
-        }
-    }
-}
-
-enum GameState {
-    Solving,
-    Solved,
-}
-
-struct Game {
-    state: GameState,
-    graph: Graph,
-}
-
-impl Game {
-    fn create(size: usize) -> Self {
-        let grid = Grid::generate(size);
-        let graph = Graph::create(&grid);
-        Self {
-            state: GameState::Solving,
-            graph,
         }
     }
 }
