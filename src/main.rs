@@ -113,7 +113,9 @@ impl Ui {
             let clicked_component = graph.find_component(&position);
             let colour = clicked_component.colour;
 
-            println!("Detected click at cell ({}, {}) with colour {:#?}", position.column, position.row, colour)
+            println!("Detected click at cell ({}, {}) with colour {:#?}", position.column, position.row, colour);
+
+            graph.change_colour_of_component_at(&Position{column: 0_usize, row: 0_usize}, colour);
         }
     }
 }
