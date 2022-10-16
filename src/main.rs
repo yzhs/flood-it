@@ -71,13 +71,14 @@ impl Ui {
         self.grid_y = (screen_height - grid_size) / 2.0;
     }
 
-    fn render(&self, graph: &Graph) {
+    fn render(&self, game: &Game) {
         clear_background(BLACK);
 
         let grid_x = self.grid_x;
         let grid_y = self.grid_y;
         let cell_size = self.cell_size();
 
+        let graph = &game.graph;
         for component in graph.neighbours.keys() {
             for position in &graph.components[component].cells {
                 draw_cell(grid_x, grid_y, cell_size, position, graph.components[component].colour);
@@ -136,7 +137,7 @@ async fn main() {
         ui.handle_click(&mut game);
 
         ui.resize();
-        ui.render(&game.graph);
+        ui.render(&game);
 
         match game.state {
             GameState::Solving =>
