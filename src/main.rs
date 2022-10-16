@@ -107,10 +107,6 @@ impl Ui {
     }
 
     fn handle_click(&self, game: &mut Game) {
-        if !is_mouse_button_pressed(MouseButton::Left) {
-            return;
-        }
-
         if let Some(position) = self.cell_position(mouse_position()) {
             let clicked_component = game.graph.find_component(&position);
             let colour = clicked_component.colour;
@@ -143,7 +139,9 @@ async fn main() {
             break;
         }
 
-        ui.handle_click(&mut game);
+        if is_mouse_button_pressed(MouseButton::Left) {
+            ui.handle_click(&mut game);
+        }
 
         ui.resize();
         ui.render(&game);
