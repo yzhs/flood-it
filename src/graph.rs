@@ -123,7 +123,7 @@ fn find_connected_components(grid: &Grid) -> Vec<(ConnectedComponent, HashSet<us
         components.push((component, neighbours));
     }
 
-    return components;
+    components
 }
 
 impl Graph {
