@@ -118,6 +118,15 @@ impl Ui {
             println!("Detected click at cell ({}, {}) with colour {:#?}", position.column, position.row, colour);
 
             game.fill_component_of_top_left_cell_with(colour);
+
+            match game.state {
+                GameState::Solving =>
+                if game.graph.components.len() == 1 {
+                    game.state = GameState::Solved;
+                    println!("Done");
+                }
+                GameState::Solved => (),
+            }
         }
     }
 }
@@ -138,15 +147,6 @@ async fn main() {
 
         ui.resize();
         ui.render(&game);
-
-        match game.state {
-            GameState::Solving =>
-            if game.graph.components.len() == 1 {
-                game.state = GameState::Solved;
-                println!("Done");
-            }
-            GameState::Solved => (),
-        }
 
         next_frame().await
     }
