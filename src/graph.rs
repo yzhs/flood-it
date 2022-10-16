@@ -128,7 +128,7 @@ fn find_connected_components(grid: &Grid) -> Vec<(ConnectedComponent, HashSet<us
 
 impl Graph {
     pub fn create(grid: &Grid) -> Self {
-        let components_and_neighbours = find_connected_components(&grid);
+        let components_and_neighbours = find_connected_components(grid);
 
         let map_cell_to_component: HashMap<Position, ConnectedComponent> =
             components_and_neighbours
@@ -187,7 +187,7 @@ impl Graph {
 
     pub fn find_component(&self, position: &Position) -> &ConnectedComponent {
         for component in self.neighbours.keys() {
-            if self.components[component].cells.contains(&position) {
+            if self.components[component].cells.contains(position) {
                 return &self.components[component];
             }
         }
