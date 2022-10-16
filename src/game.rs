@@ -12,7 +12,7 @@ pub struct Game {
     pub graph: Graph,
 }
 
-const top_left_cell: Position = Position{column: 0_usize, row: 0_usize};
+const TOP_LEFT_CELL: Position = Position{column: 0_usize, row: 0_usize};
 
 impl Game {
     pub fn create(size: usize) -> Self {
@@ -25,6 +25,6 @@ impl Game {
     }
 
     pub fn fill_component_of_top_left_cell_with(&mut self, colour: Colour) {
-        self.graph.change_colour_of_component_at(&top_left_cell, colour);
+        self.graph.change_colour_of_component_at(&TOP_LEFT_CELL, colour);
     }
 }
