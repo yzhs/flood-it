@@ -1,7 +1,7 @@
 use macroquad::prelude::*;
 
 use colour::Colour;
-use graph::{Graph, Position};
+use graph::Position;
 use game::{Game, GameState};
 
 mod colour;
