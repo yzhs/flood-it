@@ -105,18 +105,18 @@ impl Ui {
         }
     }
 
-    fn handle_click(&self, graph: &mut Graph) {
+    fn handle_click(&self, game: &mut Game) {
         if !is_mouse_button_pressed(MouseButton::Left) {
             return;
         }
 
         if let Some(position) = self.cell_position(mouse_position()) {
-            let clicked_component = graph.find_component(&position);
+            let clicked_component = game.graph.find_component(&position);
             let colour = clicked_component.colour;
 
             println!("Detected click at cell ({}, {}) with colour {:#?}", position.column, position.row, colour);
 
-            graph.change_colour_of_component_at(&Position{column: 0_usize, row: 0_usize}, colour);
+            game.fill_component_of_top_left_cell_with(colour);
         }
     }
 }
@@ -133,7 +133,7 @@ async fn main() {
             break;
         }
 
-        ui.handle_click(&mut game.graph);
+        ui.handle_click(&mut game);
 
         ui.resize();
         ui.render(&game.graph);
