@@ -125,6 +125,18 @@ enum GameState {
     Solved,
 }
 
+struct Game {
+    state: GameState
+}
+
+impl Game {
+    fn create() -> Self {
+        Self {
+            state: GameState::Solving,
+        }
+    }
+}
+
 #[macroquad::main("Flood-It")]
 async fn main() {
     let size = 8;
@@ -134,7 +146,7 @@ async fn main() {
 
     let mut ui = Ui::create(size);
 
-    let mut state = GameState::Solving;
+    let mut game = Game::create();
 
     loop {
         if let Some(KeyCode::Q) = get_last_key_pressed() {
@@ -146,10 +158,10 @@ async fn main() {
         ui.resize();
         ui.render(&graph);
 
-        match state {
+        match game.state {
             GameState::Solving =>
             if graph.components.len() == 1 {
-                state = GameState::Solved;
+                game.state = GameState::Solved;
                 println!("Done");
             }
             GameState::Solved => (),
