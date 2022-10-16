@@ -120,6 +120,11 @@ impl Ui {
     }
 }
 
+enum GameState {
+    Solving,
+    Solved,
+}
+
 #[macroquad::main("Flood-It")]
 async fn main() {
     let size = 8;
@@ -128,6 +133,8 @@ async fn main() {
     println!("{:#?}", graph);
 
     let mut ui = Ui::create(size);
+
+    let mut state = GameState::Solving;
 
     loop {
         if let Some(KeyCode::Q) = get_last_key_pressed() {
@@ -138,6 +145,15 @@ async fn main() {
 
         ui.resize();
         ui.render(&graph);
+
+        match state {
+            GameState::Solving =>
+            if graph.components.len() == 1 {
+                state = GameState::Solved;
+                println!("Done");
+            }
+            GameState::Solved => (),
+        }
 
         next_frame().await
     }
