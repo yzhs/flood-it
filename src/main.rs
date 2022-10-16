@@ -126,13 +126,17 @@ enum GameState {
 }
 
 struct Game {
-    state: GameState
+    state: GameState,
+    graph: Graph,
 }
 
 impl Game {
-    fn create() -> Self {
+    fn create(size: usize) -> Self {
+        let grid = Grid::generate(size);
+        let graph = Graph::create(&grid);
         Self {
             state: GameState::Solving,
+            graph,
         }
     }
 }
@@ -140,27 +144,23 @@ impl Game {
 #[macroquad::main("Flood-It")]
 async fn main() {
     let size = 8;
-    let grid = Grid::generate(size);
-    let mut graph = Graph::create(&grid);
-    println!("{:#?}", graph);
 
+    let mut game = Game::create(size);
     let mut ui = Ui::create(size);
-
-    let mut game = Game::create();
 
     loop {
         if let Some(KeyCode::Q) = get_last_key_pressed() {
             break;
         }
 
-        ui.handle_click(&mut graph);
+        ui.handle_click(&mut game.graph);
 
         ui.resize();
-        ui.render(&graph);
+        ui.render(&game.graph);
 
         match game.state {
             GameState::Solving =>
-            if graph.components.len() == 1 {
+            if game.graph.components.len() == 1 {
                 game.state = GameState::Solved;
                 println!("Done");
             }
