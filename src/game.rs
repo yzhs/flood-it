@@ -17,12 +17,11 @@ pub struct Game {
 const TOP_LEFT_CELL: Position = Position{column: 0_usize, row: 0_usize};
 
 impl Game {
-    pub fn create(size: u32) -> Self {
-        let num_colours = 4;
-        let grid = Grid::generate(size as usize);
+    pub fn create(size: u32, number_of_colours: u32) -> Self {
+        let grid = Grid::generate(size as usize, number_of_colours);
         let graph = Graph::create(&grid);
 
-        let allowed_clicks = 25 * 2 * size * num_colours / (2 * 14 * 6);
+        let allowed_clicks = 25 * 2 * size * number_of_colours / (2 * 14 * 6);
 
         Self {
             state: GameState::Solving,

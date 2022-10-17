@@ -11,7 +11,7 @@ pub struct Grid {
 }
 
 impl Grid {
-    pub fn generate(size: usize) -> Self {
+    pub fn generate(size: usize, number_of_colours: u32) -> Self {
         let mut cells = vec![Colour::Red; size * size];
         for i in 0..size {
             for j in 0..size {
@@ -35,7 +35,7 @@ mod test {
     pub fn generates_grid_of_correct_size() {
         let size = 3;
 
-        let grid = Grid::generate(size);
+        let grid = Grid::generate(size, 4);
 
         assert_eq!(grid.number_of_rows, size);
         assert_eq!(grid.number_of_columns, size);

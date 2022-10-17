@@ -130,8 +130,9 @@ impl Ui {
 #[macroquad::main("Flood-It")]
 async fn main() {
     let size = 8;
+    let number_of_colours = 8;
 
-    let mut game = Game::create(size);
+    let mut game = Game::create(size, number_of_colours);
     let mut ui = Ui::create(size);
 
     loop {

@@ -254,7 +254,8 @@ mod test {
     #[test]
     fn should_return_same_grid_as_input() {
         let size = 4;
-        let grid = Grid::generate(size);
+        let number_of_colours = 8;
+        let grid = Grid::generate(size, number_of_colours);
 
         let graph = Graph::create(&grid);
         let reconstituted_grid = graph.to_grid(size, size);
@@ -304,7 +305,8 @@ mod test {
     #[test]
     fn should_have_same_keys_for_components_and_neighbours_maps() {
         let size = 4;
-        let grid = Grid::generate(size);
+        let number_of_colours = 8;
+        let grid = Grid::generate(size, number_of_colours);
 
         let graph = Graph::create(&grid);
 
@@ -316,7 +318,8 @@ mod test {
     #[test]
     fn should_contain_exactly_the_component_ids_as_keys() {
         let size = 4;
-        let grid = Grid::generate(size);
+        let number_of_colours = 8;
+        let grid = Grid::generate(size, number_of_colours);
 
         let graph = Graph::create(&grid);
 
@@ -332,7 +335,8 @@ mod test {
     #[test]
     fn should_contain_only_component_ids_as_values_in_neighbours_map() {
         let size = 4;
-        let grid = Grid::generate(size);
+        let number_of_colours = 8;
+        let grid = Grid::generate(size, number_of_colours);
 
         let graph = Graph::create(&grid);
 
