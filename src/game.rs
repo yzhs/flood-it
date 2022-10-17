@@ -10,8 +10,8 @@ pub enum GameState {
 pub struct Game {
     pub state: GameState,
     pub graph: Graph,
-    number_of_clicks: u32,
-    allowed_clicks: u32,
+    pub number_of_clicks: u32,
+    pub allowed_clicks: u32,
 }
 
 const TOP_LEFT_CELL: Position = Position{column: 0_usize, row: 0_usize};
