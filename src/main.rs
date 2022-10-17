@@ -111,8 +111,6 @@ impl Ui {
             let clicked_component = game.graph.find_component(&position);
             let colour = clicked_component.colour;
 
-            println!("Detected click at cell ({}, {}) with colour {:#?}", position.column, position.row, colour);
-
             game.fill_component_of_top_left_cell_with(colour);
 
             match game.state {
