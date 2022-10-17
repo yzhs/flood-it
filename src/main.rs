@@ -119,7 +119,21 @@ impl Ui {
                 GameState::Solving =>
                 if game.graph.components.len() == 1 {
                     game.state = GameState::Solved;
-                    println!("Done");
+
+                    if game.number_of_clicks <= game.allowed_clicks {
+                        println!(
+                            "You win! You used {} out of {} available moves.",
+                            game.number_of_clicks,
+                            game.allowed_clicks,
+                        );
+                    } else {
+                        println!(
+                            "You lose. You took {} moves but should have \
+                                    finished in {}.",
+                            game.number_of_clicks,
+                            game.allowed_clicks,
+                        );
+                    }
                 }
                 GameState::Solved => (),
             }
