@@ -16,8 +16,8 @@ pub struct Game {
 const TOP_LEFT_CELL: Position = Position{column: 0_usize, row: 0_usize};
 
 impl Game {
-    pub fn create(size: usize) -> Self {
-        let grid = Grid::generate(size);
+    pub fn create(size: u32) -> Self {
+        let grid = Grid::generate(size as usize);
         let graph = Graph::create(&grid);
         Self {
             state: GameState::Solving,

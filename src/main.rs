@@ -35,7 +35,7 @@ fn draw_cell(grid_x: f32, grid_y: f32, cell_size: f32, position: &Position, colo
 
 struct Ui {
     /// Size of the grid in cells.
-    size: usize,
+    size: u32,
 
     /// Size of the grid in pixels.  Assumes the grid is always square.
     grid_size: f32,
@@ -48,7 +48,7 @@ struct Ui {
 }
 
 impl Ui {
-    fn create(size: usize) -> Ui {
+    fn create(size: u32) -> Ui {
         let mut ui = Ui {
             size,
             grid_size: 0.0,
