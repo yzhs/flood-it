@@ -139,7 +139,8 @@ impl Ui {
                     self.click_while_solving(game, position);
                 }
 
-            GameState::Solved => (),
+            GameState::Solved =>
+                *game = Game::create(8, 4),
         }
     }
 }
