@@ -106,35 +106,40 @@ impl Ui {
         }
     }
 
-    fn handle_click(&self, game: &mut Game, mouse_position: (f32, f32)) {
-        if let Some(position) = self.cell_position(mouse_position) {
-            let clicked_component = game.graph.find_component(&position);
-            let colour = clicked_component.colour;
+    fn click_while_solving(&self, game: &mut Game, position: Position) {
+        let clicked_component = game.graph.find_component(&position);
+        let colour = clicked_component.colour;
 
-            game.fill_component_of_top_left_cell_with(colour);
+        game.fill_component_of_top_left_cell_with(colour);
 
-            match game.state {
-                GameState::Solving =>
-                if game.graph.components.len() == 1 {
-                    game.state = GameState::Solved;
+        if game.graph.components.len() == 1 {
+            game.state = GameState::Solved;
 
-                    if game.number_of_clicks <= game.allowed_clicks {
-                        println!(
-                            "You win! You used {} out of {} available moves.",
-                            game.number_of_clicks,
-                            game.allowed_clicks,
-                        );
-                    } else {
-                        println!(
-                            "You lose. You took {} moves but should have \
-                                    finished in {}.",
-                            game.number_of_clicks,
-                            game.allowed_clicks,
-                        );
-                    }
-                }
-                GameState::Solved => (),
+            if game.number_of_clicks <= game.allowed_clicks {
+                println!(
+                    "You win! You used {} out of {} available moves.",
+                    game.number_of_clicks,
+                    game.allowed_clicks,
+                );
+            } else {
+                println!(
+                    "You lose. You took {} moves but should have \
+                            finished in {}.",
+                    game.number_of_clicks,
+                    game.allowed_clicks,
+                );
             }
+        }
+    }
+
+    fn handle_click(&self, game: &mut Game, mouse_position: (f32, f32)) {
+        match game.state {
+            GameState::Solving =>
+                if let Some(position) = self.cell_position(mouse_position) {
+                    self.click_while_solving(game, position);
+                }
+
+            GameState::Solved => (),
         }
     }
 }
