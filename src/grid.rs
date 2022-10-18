@@ -15,7 +15,8 @@ impl Grid {
         let mut cells = vec![Colour::Red; size * size];
         for i in 0..size {
             for j in 0..size {
-                cells[size * i + j] = ALL_COLOURS[gen_range(0, ALL_COLOURS.len().min(number_of_colours as usize))];
+                cells[size * i + j] =
+                    ALL_COLOURS[gen_range(0, ALL_COLOURS.len().min(number_of_colours as usize))];
             }
         }
 

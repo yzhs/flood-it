@@ -14,7 +14,10 @@ pub struct Game {
     pub allowed_clicks: u32,
 }
 
-const TOP_LEFT_CELL: Position = Position{column: 0_usize, row: 0_usize};
+const TOP_LEFT_CELL: Position = Position {
+    column: 0_usize,
+    row: 0_usize,
+};
 
 impl Game {
     pub fn create(size: u32, number_of_colours: u32) -> Self {
@@ -33,6 +36,7 @@ impl Game {
 
     pub fn fill_component_of_top_left_cell_with(&mut self, colour: Colour) {
         self.number_of_clicks += 1;
-        self.graph.change_colour_of_component_at(&TOP_LEFT_CELL, colour);
+        self.graph
+            .change_colour_of_component_at(&TOP_LEFT_CELL, colour);
     }
 }

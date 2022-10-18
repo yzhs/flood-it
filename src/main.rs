@@ -1,13 +1,13 @@
 use macroquad::prelude::*;
 
 use colour::Colour;
-use graph::Position;
 use game::{Game, GameState};
+use graph::Position;
 
 mod colour;
+mod game;
 mod graph;
 mod grid;
-mod game;
 
 fn macroquad_colour(colour: Colour) -> Color {
     match colour {
@@ -85,7 +85,13 @@ impl Ui {
         let graph = &game.graph;
         for component in graph.neighbours.keys() {
             for position in &graph.components[component].cells {
-                draw_cell(grid_x, grid_y, cell_size, position, graph.components[component].colour);
+                draw_cell(
+                    grid_x,
+                    grid_y,
+                    cell_size,
+                    position,
+                    graph.components[component].colour,
+                );
             }
         }
     }
@@ -106,7 +112,10 @@ impl Ui {
             // Out of bounds, nothing to do
             None
         } else {
-            Some(Position{column: x.floor() as usize, row: y.floor() as usize})
+            Some(Position {
+                column: x.floor() as usize,
+                row: y.floor() as usize,
+            })
         }
     }
 
@@ -122,15 +131,13 @@ impl Ui {
             if game.number_of_clicks <= game.allowed_clicks {
                 println!(
                     "You win! You used {} out of {} available moves.",
-                    game.number_of_clicks,
-                    game.allowed_clicks,
+                    game.number_of_clicks, game.allowed_clicks,
                 );
             } else {
                 println!(
                     "You lose. You took {} moves but should have \
                             finished in {}.",
-                    game.number_of_clicks,
-                    game.allowed_clicks,
+                    game.number_of_clicks, game.allowed_clicks,
                 );
             }
         }
@@ -138,10 +145,11 @@ impl Ui {
 
     fn handle_click(&self, game: &mut Game, mouse_position: (f32, f32)) {
         match game.state {
-            GameState::Solving =>
+            GameState::Solving => {
                 if let Some(position) = self.cell_position(mouse_position) {
                     self.click_while_solving(game, position);
                 }
+            }
 
             GameState::Solved => self.regenerate(game),
         }
@@ -161,7 +169,7 @@ impl Ui {
 
 /// Handle command line arguments
 fn parse_args() -> (u32, u32) {
-    use clap::{Arg, Command, value_parser};
+    use clap::{value_parser, Arg, Command};
 
     let matches = Command::new("Flood-It")
         .author(env!("CARGO_PKG_AUTHORS"))
@@ -183,9 +191,9 @@ fn parse_args() -> (u32, u32) {
         .get_matches();
 
     let colors = {
-        let tmp = *matches.get_one::<u32>("colors").expect(
-            "Invalid number of colors",
-        ) as usize;
+        let tmp = *matches
+            .get_one::<u32>("colors")
+            .expect("Invalid number of colors") as usize;
         let maximum_number_of_colours = colour::ALL_COLOURS.len();
         if tmp < 3 || tmp > maximum_number_of_colours {
             panic!(
@@ -198,9 +206,7 @@ fn parse_args() -> (u32, u32) {
     };
 
     let size: u32 = {
-        let tmp = *matches.get_one::<u32>("size").expect(
-            "Invalid grid size",
-        );
+        let tmp = *matches.get_one::<u32>("size").expect("Invalid grid size");
         if tmp < 2 {
             panic!("Flood-It needs a grid of at least 2x2 cells.");
         } else {
@@ -227,7 +233,10 @@ async fn main() {
             ui.handle_click(&mut game, mouse_position());
         }
 
-        if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::N) || is_key_pressed(KeyCode::R) {
+        if is_key_pressed(KeyCode::Space)
+            || is_key_pressed(KeyCode::N)
+            || is_key_pressed(KeyCode::R)
+        {
             ui.handle_key_press(&mut game);
         }
 

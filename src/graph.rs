@@ -165,7 +165,7 @@ impl Graph {
 
         Self {
             components,
-            neighbours
+            neighbours,
         }
     }
 
@@ -225,7 +225,10 @@ impl Graph {
         // Remove the ID of the component itself
         neighbours.remove(&component_id);
         // and the IDs of the neighbours that were merged into the component
-        neighbours = neighbours.difference(&removed_neighbours).copied().collect();
+        neighbours = neighbours
+            .difference(&removed_neighbours)
+            .copied()
+            .collect();
 
         // Add the cells from the neighbours which now have the new colour
         component.cells.extend(new_cells.into_iter());
@@ -343,7 +346,13 @@ mod test {
         let component_ids: HashSet<_> = graph.components.keys().copied().collect();
 
         for (_, neighbours) in graph.neighbours {
-            assert_eq!(neighbours.difference(&component_ids).collect::<HashSet<_>>().len(), 0);
+            assert_eq!(
+                neighbours
+                    .difference(&component_ids)
+                    .collect::<HashSet<_>>()
+                    .len(),
+                0
+            );
         }
     }
 }
