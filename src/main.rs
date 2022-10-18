@@ -37,6 +37,9 @@ struct Ui {
     /// Size of the grid in cells.
     size: u32,
 
+    /// The number of different colours that can be used for the cells.
+    number_of_colours: u32,
+
     /// Size of the grid in pixels.  Assumes the grid is always square.
     grid_size: f32,
 
@@ -48,9 +51,10 @@ struct Ui {
 }
 
 impl Ui {
-    fn create(size: u32) -> Ui {
+    fn create(size: u32, number_of_colours: u32) -> Ui {
         let mut ui = Ui {
             size,
+            number_of_colours,
             grid_size: 0.0,
             grid_x: 0.0,
             grid_y: 0.0,
@@ -140,7 +144,7 @@ impl Ui {
                 }
 
             GameState::Solved =>
-                *game = Game::create(8, 4),
+                *game = Game::create(self.size, self.number_of_colours),
         }
     }
 }
@@ -200,7 +204,7 @@ async fn main() {
     let (number_of_colours, size) = parse_args();
 
     let mut game = Game::create(size, number_of_colours);
-    let mut ui = Ui::create(size);
+    let mut ui = Ui::create(size, number_of_colours);
 
     loop {
         if let Some(KeyCode::Q) = get_last_key_pressed() {
