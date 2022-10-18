@@ -143,9 +143,12 @@ impl Ui {
                     self.click_while_solving(game, position);
                 }
 
-            GameState::Solved =>
-                *game = Game::create(self.size, self.number_of_colours),
+            GameState::Solved => self.regenerate(game),
         }
+    }
+
+    fn regenerate(&self, game: &mut Game) {
+        *game = Game::create(self.size, self.number_of_colours);
     }
 }
 
