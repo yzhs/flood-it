@@ -147,6 +147,13 @@ impl Ui {
         }
     }
 
+    fn handle_key_press(&self, game: &mut Game) {
+        match game.state {
+            GameState::Solving => (),
+            GameState::Solved => self.regenerate(game),
+        }
+    }
+
     fn regenerate(&self, game: &mut Game) {
         *game = Game::create(self.size, self.number_of_colours);
     }
@@ -216,6 +223,10 @@ async fn main() {
 
         if is_mouse_button_pressed(MouseButton::Left) {
             ui.handle_click(&mut game, mouse_position());
+        }
+
+        if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::N) || is_key_pressed(KeyCode::R) {
+            ui.handle_key_press(&mut game);
         }
 
         ui.resize();
