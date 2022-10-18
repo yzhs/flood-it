@@ -145,10 +145,59 @@ impl Ui {
     }
 }
 
+/// Handle command line arguments
+fn parse_args() -> (u32, u32) {
+    use clap::{App, Arg};
+
+    let matches = App::new("Flood-It")
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .arg(
+            Arg::with_name("colors")
+                .takes_value(true)
+                .help("The number of different colors")
+                .default_value("6"),
+        )
+        .arg(
+            Arg::with_name("size")
+                .takes_value(true)
+                .help("The height and width of the grid")
+                .default_value("14"),
+        )
+        .get_matches();
+
+    let colors = {
+        let tmp: usize = matches.value_of("colors").unwrap().parse().expect(
+            "Invalid number of colors",
+        );
+        let maximum_number_of_colours = colour::ALL_COLOURS.len();
+        if tmp < 3 || tmp > maximum_number_of_colours {
+            panic!(
+                "Flood-It only supports 3 through {} (inclusive) colors.",
+                maximum_number_of_colours,
+            );
+        } else {
+            tmp as u32
+        }
+    };
+
+    let size: u32 = {
+        let tmp: u32 = matches.value_of("size").unwrap().parse().expect(
+            "Invalid grid size",
+        );
+        if tmp < 2 {
+            panic!("Flood-It needs a grid of at least 2x2 cells.");
+        } else {
+            tmp
+        }
+    };
+
+    (colors, size)
+}
+
 #[macroquad::main("Flood-It")]
 async fn main() {
-    let size = 8;
-    let number_of_colours = 4;
+    let (number_of_colours, size) = parse_args();
 
     let mut game = Game::create(size, number_of_colours);
     let mut ui = Ui::create(size);
